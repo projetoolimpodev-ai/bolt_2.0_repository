@@ -1,0 +1,298 @@
+{
+  "name": "BOLT - MS00022 - R-TENANT-DATA",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "tenants/rTenantData",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        96
+      ],
+      "id": "b18badc4-dcc9-4aeb-babe-a1a96aabb8e7",
+      "name": "Webhook",
+      "webhookId": "7ee2b0d8-a979-47c7-a92a-dce45cc7c57d",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "de5ed9bd-7e4f-4ee6-9b81-809fcecae675",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        192
+      ],
+      "id": "2b65cc40-74f8-4382-996c-3cacab9ef17a",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "collection": "tenants",
+        "options": {},
+        "query": "={\n  \"_id\":\"{{ $json.query._id}}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "a7e4e353-bad4-4761-9933-e806e2aedcfc",
+      "name": "Find Tenant",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "collection": "users",
+        "options": {},
+        "query": "={\n  \"tenantId\":\"{{ $json._id }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "f8c20113-ea9a-4634-932e-e8ca42740040",
+      "name": "Find Users",
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const users = [];\nconst count = $input.all().length;\n\nfor (const item of $input.all()) {\n  users.push(item.json);\n}\n\nreturn { users, count };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "6a83d5ca-312b-40ea-b37f-ea61b15867e4",
+      "name": "Normalize Users"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd43b0c0-99ab-4f46-9646-1b746a580383",
+              "name": "_id",
+              "value": "={{ $('Find Tenant').item.json._id }}",
+              "type": "string"
+            },
+            {
+              "id": "188da22a-342b-438a-8fd3-72400b83320a",
+              "name": "identification",
+              "value": "={{ $('Find Tenant').item.json.identification }}",
+              "type": "object"
+            },
+            {
+              "id": "5936cb15-bf33-458f-8c94-5a83cc3835d0",
+              "name": "address",
+              "value": "={{ $('Find Tenant').item.json.address }}",
+              "type": "object"
+            },
+            {
+              "id": "b1ae04d1-bd0e-4db4-a0ed-45a954214f30",
+              "name": "contacts",
+              "value": "={{ $('Find Tenant').item.json.contacts }}",
+              "type": "array"
+            },
+            {
+              "id": "439ba99e-71c4-4d35-9cec-d12c3cb4938e",
+              "name": "status",
+              "value": "={{ $('Find Tenant').item.json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "8d71ed37-0849-4548-9995-1f7a2e2eb22a",
+              "name": "requester",
+              "value": "={{ $('Find Tenant').item.json.requester }}",
+              "type": "string"
+            },
+            {
+              "id": "8831934f-6623-4f4d-8207-72031c5552be",
+              "name": "createdAt",
+              "value": "={{ $('Find Tenant').item.json.createdAt }}",
+              "type": "string"
+            },
+            {
+              "id": "b430ebac-85e7-41b1-bad5-d918c4433fc2",
+              "name": "package",
+              "value": "={{ $('Find Tenant').item.json.package }}",
+              "type": "object"
+            },
+            {
+              "id": "b8241fb6-a2f8-4d94-91b8-22b589b819db",
+              "name": "updatedAt",
+              "value": "={{ $('Find Tenant').item.json.updatedAt }}",
+              "type": "string"
+            },
+            {
+              "id": "46adbf3b-a995-406f-8b06-e2846f83e93e",
+              "name": "customerId",
+              "value": "={{ $('Find Tenant').item.json.customerId }}",
+              "type": "string"
+            },
+            {
+              "id": "efe9c8c3-e9d6-4431-b4a6-48c48c99433b",
+              "name": "charge",
+              "value": "={{ $('Find Tenant').item.json.charge }}",
+              "type": "object"
+            },
+            {
+              "id": "2722d96e-132f-43d1-b624-f17a4c9e364d",
+              "name": "users",
+              "value": "={{ $json.users }}",
+              "type": "array"
+            },
+            {
+              "id": "7e6018f8-e5ea-4d96-80ea-b58259fc9ed1",
+              "name": "countUsers",
+              "value": "={{ $json.count }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        0
+      ],
+      "id": "bfa7554b-5dc0-478f-af30-a28cf299066c",
+      "name": "Set Estructure"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Find Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Tenant": {
+      "main": [
+        [
+          {
+            "node": "Find Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Users": {
+      "main": [
+        [
+          {
+            "node": "Normalize Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Users": {
+      "main": [
+        [
+          {
+            "node": "Set Estructure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Estructure": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0d832cf4-e0cb-4cc6-ad0b-a43819d7eac6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "VPqmal1mesLoatQc",
+  "tags": [
+    {
+      "updatedAt": "2026-08-17T18:13:02.598Z",
+      "createdAt": "2026-08-17T18:13:02.598Z",
+      "id": "4H4rTRjTkwdYyvUx",
+      "name": "BOLT_TENANTS"
+    }
+  ]
+}

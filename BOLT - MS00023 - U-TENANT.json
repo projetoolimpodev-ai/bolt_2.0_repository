@@ -1,0 +1,872 @@
+{
+  "name": "BOLT - MS00023 - U-TENANT",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1712,
+        -576
+      ],
+      "id": "0de2046a-ba6f-4a89-b334-57e1f897bfca",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "PATCH",
+        "path": "tenants/uTenant",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        16
+      ],
+      "id": "5590be65-8f68-4ac5-bb24-da4172787e65",
+      "name": "Webhook",
+      "webhookId": "729cd891-e899-4939-a130-9d4eb88b5069",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "update",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "cee08894-8dbc-4288-8b35-1c5f0af2f827"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ATUALIZAR DADOS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "69110655-8d94-4acd-9da9-62711e67c4ac",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "set_package",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ADICONAR PLANO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9af28b89-c3a4-4179-8fad-1a87f51c7ea6",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "renew",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "RENOVAR PLANO"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        144,
+        -224
+      ],
+      "id": "7bd0c024-d7c5-4cd6-a5c4-a384187548cc",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const incoming = $('Webhook').first().json.body;\nconst database = $input.all(1)[0].json;\n\n// Campos que nunca devem ser alterados\nconst ignoredFields = [\n    \"_id\",\n    \"action\",\n    \"createdAt\",\n    \"status\"\n];\n\nfunction mergeObjects(target, source) {\n\n    for (const key of Object.keys(source)) {\n\n        if (ignoredFields.includes(key)) {\n            continue;\n        }\n\n        const sourceValue = source[key];\n        const targetValue = target[key];\n\n        // Objeto\n        if (\n            sourceValue &&\n            typeof sourceValue === \"object\" &&\n            !Array.isArray(sourceValue)\n        ) {\n\n            if (\n                !targetValue ||\n                typeof targetValue !== \"object\" ||\n                Array.isArray(targetValue)\n            ) {\n                target[key] = {};\n            }\n\n            mergeObjects(target[key], sourceValue);\n            continue;\n        }\n\n        // Array (substitui completamente)\n        if (Array.isArray(sourceValue)) {\n            target[key] = sourceValue;\n            continue;\n        }\n\n        // Valor simples\n        target[key] = sourceValue;\n    }\n}\n\nmergeObjects(database, incoming);\n\ndatabase.updatedAt = new Date;\n\nreturn [\n    {\n        json: database\n    }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        -768
+      ],
+      "id": "acdf352c-6790-459d-9d40-664b6d231b7f",
+      "name": "Verifica Campos Alterados"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "tenants",
+        "updateKey": "_id",
+        "fields": "=identification, address, contacts, requester, updatedAt",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        1264,
+        -768
+      ],
+      "id": "3c0fcc19-da4f-4359-a705-40d5ba9b1ca3",
+      "name": "Atualizar Dados",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0feb496a-0a0f-49b9-a53d-2c2160027a4c",
+              "name": "code",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "923d7761-61cb-4c85-84fc-3a79c5cfa9d1",
+              "name": "description",
+              "value": "Dados Atualizados com Sucesso.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        -864
+      ],
+      "id": "b3e5a10d-315d-45b1-8e65-ad273236ad43",
+      "name": "Set Response"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const data = $input.item.json;\nlet body = {};\nlet _id = \"\";\nlet update = [];\n\nbody = data.body;\n_id = body._id;\n\nif (body.status) {\n  update.push(\"status\");\n}\n\nif (body.action === 'set_package') {\n  update.push(\"package\");\n}\n\nbody.updatedAt = new Date;\nupdate.push(\"updatedAt\");\n\nbody.update = update.join(\",\");\n\nreturn body;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        -192
+      ],
+      "id": "d9e5f17f-d5be-42eb-9570-cbd9294c2e65",
+      "name": "Configurar Cobrança"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "tenants",
+        "updateKey": "_id",
+        "fields": "={{ $json.update }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        -192
+      ],
+      "id": "3a7cd63e-9e1b-48a5-ab60-f8c1202071e6",
+      "name": "Atualizar Dados Cobrança",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "collection": "tenants",
+        "options": {},
+        "query": "={\n  \"_id\":\"{{ $('Configurar Cobrança').item.json._id }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        -288
+      ],
+      "id": "2d5680e6-377f-4365-bf7c-60c276bacdb2",
+      "name": "Find Tenant Cobrança",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6e7bb7ba-e2ed-4592-aca3-0050741a7dd6",
+              "name": "_id",
+              "value": "={{ $json._id }}",
+              "type": "object"
+            },
+            {
+              "id": "cf8d704f-de92-4bbb-a46b-d2435e88b9ef",
+              "name": "name",
+              "value": "={{ $json.identification.registeredCompanyName }}",
+              "type": "string"
+            },
+            {
+              "id": "78cf39a7-1a20-488d-a266-df9838767397",
+              "name": "email",
+              "value": "={{ $json.contacts[0].email }}",
+              "type": "string"
+            },
+            {
+              "id": "0f43b0a8-041e-45bc-a237-233b6bf3078a",
+              "name": "phone",
+              "value": "={{ $json.contacts[0].phone }}",
+              "type": "string"
+            },
+            {
+              "id": "6b3aa0e5-9409-46e2-b973-5599f9075f45",
+              "name": "description",
+              "value": "={{ $json.package.namePackage }}",
+              "type": "string"
+            },
+            {
+              "id": "b659dd09-04ba-4be7-9903-202b8b300666",
+              "name": "address.address",
+              "value": "={{ $json.address.address }}, {{ $json.address.number }}",
+              "type": "string"
+            },
+            {
+              "id": "a4cafd9e-c2f4-4712-b5c2-ccb231c9ef72",
+              "name": "address.complement",
+              "value": "={{ $json.address.complements }}",
+              "type": "array"
+            },
+            {
+              "id": "027d2eb7-9ff9-45fc-8546-52e0d39c156d",
+              "name": "address.city",
+              "value": "={{ $json.address.city }}",
+              "type": "string"
+            },
+            {
+              "id": "4dfa603e-0ba6-4c53-9228-503e4522661f",
+              "name": "address.state",
+              "value": "={{ $json.address.state }}",
+              "type": "string"
+            },
+            {
+              "id": "9f4c8039-2c48-4eae-a5a1-453542d48120",
+              "name": "address.postal_code",
+              "value": "={{ $json.address.zipcode }}",
+              "type": "string"
+            },
+            {
+              "id": "06d85c50-1f18-43b3-b73b-0a3c90a61e27",
+              "name": "address.country",
+              "value": "={{ $json.address.country }}",
+              "type": "string"
+            },
+            {
+              "id": "9ccce99b-a214-49e1-95ee-b67cea55e7a1",
+              "name": "charge.amount",
+              "value": "={{ $json.package.price }}",
+              "type": "number"
+            },
+            {
+              "id": "ce40e7cc-eb22-44ea-af84-c7e979ea2fc2",
+              "name": "charge.packageId",
+              "value": "={{ $json.package.namePackage }}",
+              "type": "string"
+            },
+            {
+              "id": "9dde2ac2-4322-472f-910f-db7bcef815da",
+              "name": "charge.description",
+              "value": "={{ $json.package.maxContractedSearches }} buscas contratadas.",
+              "type": "string"
+            },
+            {
+              "id": "88772718-506b-4196-94cc-103c73b16deb",
+              "name": "charge.contractType",
+              "value": "={{ $json.package.contractType }}",
+              "type": "string"
+            },
+            {
+              "id": "bbe33be2-162a-4bb7-9a40-dabfae7e3582",
+              "name": "metadata.tenantId",
+              "value": "={{ $json._id }}",
+              "type": "object"
+            },
+            {
+              "id": "891af678-808c-4884-8184-3439cb5c1702",
+              "name": "metadata.document",
+              "value": "={{ $json.identification.cnpj }}",
+              "type": "string"
+            },
+            {
+              "id": "960ee331-a214-440e-ad22-a5fa10dad7f7",
+              "name": "metadata.customerId",
+              "value": "={{ $json.customerId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        -384
+      ],
+      "id": "f3267698-6ad8-4b2c-8a87-ee1de6278127",
+      "name": "Set Fields To Charge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f6f724d-b27b-4aaa-847f-09aa1ebb7fd4",
+              "name": "code",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "5a78e187-0b5c-43c2-83d6-547e1ac544d2",
+              "name": "description",
+              "value": "Plano Associado com Sucesso. Aguardando pagamento do Cliente.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        -384
+      ],
+      "id": "1ed600b0-27eb-4801-a1c7-61ab60c6917b",
+      "name": "Set Response Set Package"
+    },
+    {
+      "parameters": {
+        "collection": "tenants",
+        "options": {},
+        "query": "={\n  \"_id\":\"{{ $json.body._id }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        -672
+      ],
+      "id": "4c5e65a2-afd3-49a2-919d-f4db1868c784",
+      "name": "Find Tenant",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        144,
+        16
+      ],
+      "id": "3b1bfd76-e44f-4da5-89d0-4613a456aab6",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1040,
+        -576
+      ],
+      "id": "ee74a7cd-3c76-4b00-bf2d-15a53923367c",
+      "name": "Respond to Webhook - 302",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 303,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1488,
+        -672
+      ],
+      "id": "8b4a6bd3-1e93-4a5f-9fbc-353f1663763f",
+      "name": "Respond to Webhook - 303",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 304,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        816,
+        -96
+      ],
+      "id": "6e355246-b511-4109-bc21-4ff8540c8bed",
+      "name": "Respond to Webhook - 304",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1040,
+        -192
+      ],
+      "id": "b163c63d-97fc-4560-9c7d-fe81bb6e8420",
+      "name": "Respond to Webhook - 305",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "GVGcFXLHfmrchaQq",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/GVGcFXLHfmrchaQq",
+          "cachedResultName": "BOLT - WF00002 - WF-CREATE-CHARGE-STRIPE"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1264,
+        -384
+      ],
+      "id": "8e22aa12-96da-4722-a26a-1212d7258a26",
+      "name": "WF-CREATE-CHARGE-STRIPE"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -80,
+        -304
+      ],
+      "id": "7440eae2-ce7e-49ad-aa97-942857736506",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c2865e81-d0d3-400f-990d-85398a742d31",
+              "name": "_id",
+              "value": "={{ $json.body._id }}",
+              "type": "object"
+            },
+            {
+              "id": "1a0f39a3-2c40-4e81-bf72-2a34fbf26250",
+              "name": "status",
+              "value": "={{ $json.body.action }}",
+              "type": "string"
+            },
+            {
+              "id": "226b5f65-81d3-40a2-9ca6-fc9406200169",
+              "name": "charge",
+              "value": "={{ $json.body.charge }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        368,
+        0
+      ],
+      "id": "4f83c88c-ce96-489a-9a9f-bf98d8d1e330",
+      "name": "Set Renew Data"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "tenants",
+        "updateKey": "_id",
+        "fields": "status, charge",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        0
+      ],
+      "id": "eb835424-ac80-4a7d-a3ae-278e89877f20",
+      "name": "Update Renew",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Find Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Configurar Cobrança",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Renew Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica Campos Alterados": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Dados": {
+      "main": [
+        [
+          {
+            "node": "Set Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 303",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configurar Cobrança": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Dados Cobrança",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Dados Cobrança": {
+      "main": [
+        [
+          {
+            "node": "Find Tenant Cobrança",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 304",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Tenant Cobrança": {
+      "main": [
+        [
+          {
+            "node": "Set Fields To Charge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 305",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Fields To Charge": {
+      "main": [
+        [
+          {
+            "node": "WF-CREATE-CHARGE-STRIPE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Response Set Package": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Tenant": {
+      "main": [
+        [
+          {
+            "node": "Verifica Campos Alterados",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WF-CREATE-CHARGE-STRIPE": {
+      "main": [
+        [
+          {
+            "node": "Set Response Set Package",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Renew Data": {
+      "main": [
+        [
+          {
+            "node": "Update Renew",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Renew": {
+      "main": [
+        [],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1c8ccac2-3098-453c-b2cb-f9df79611922",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "ujBfObqe4CfFeHrU",
+  "tags": [
+    {
+      "updatedAt": "2026-08-17T18:13:02.598Z",
+      "createdAt": "2026-08-17T18:13:02.598Z",
+      "id": "4H4rTRjTkwdYyvUx",
+      "name": "BOLT_TENANTS"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "name": "BOLT - MS00038 - R-BB-BASELINE-DATA",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9cb1f3ee-84c0-41e1-812d-1cfe44a5c887",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const bank = \"BANCO DO BRASIL\";\nconst linhas = $input.item.json.lines;\n\n// ============================================================\n// CLIENTE\n// ============================================================\n\nconst clientMatch = linhas[1].match(\n  /Cliente\\s*([^\\r\\n]+)/i\n);\n\nconst clientName = clientMatch\n  ? clientMatch[1].trim()\n  : null;\n\n\n// ============================================================\n// FUNÇÕES AUXILIARES\n// ============================================================\n\nfunction parseValor(valor) {\n  return Number(\n    valor\n      .replace(/\\./g, \"\")\n      .replace(\",\", \".\")\n  );\n}\n\n\nfunction formatarValor(valor) {\n  return valor.toLocaleString(\"pt-BR\", {\n    minimumFractionDigits: 2,\n    maximumFractionDigits: 2\n  });\n}\n\n\nfunction dataParaTimestamp(dataTexto) {\n\n  const [dia, mes, ano] = dataTexto.split(\"/\");\n\n  return new Date(\n    Number(ano),\n    Number(mes) - 1,\n    Number(dia)\n  ).getTime();\n}\n\n\n// ============================================================\n// REGEX DA TRANSAÇÃO\n// ============================================================\n//\n// Exemplos:\n//\n// 01/07/2025 50,00 (+)99020 3442510007698\n// 01/07/2025 3,99 (-)13105 70101\n// 10/07/2025 4.916,98 (-)99020 420344200010008 Pagto cartão crédito\n//\n// ============================================================\n\nconst transacaoRegex =\n  /^(\\d{2}\\/\\d{2}\\/\\d{4})\\s+([\\d.]+,\\d{2})\\s+\\(([+-])\\)(\\d+)(?:\\s+(\\d+))?(?:\\s+(.*))?$/;\n\n\n// ============================================================\n// LINHAS QUE DEVEM SER IGNORADAS\n// ============================================================\n\nfunction ignorarLinha(linha) {\n\n  const texto = linha.toUpperCase();\n\n  return (\n\n    // Cabeçalhos\n    texto === \"EXTRATO DE CONTA CORRENTE\" ||\n    texto === \"LANÇAMENTOS\" ||\n    texto === \"DIA DOCUMENTO VALORLOTE HISTÓRICO\" ||\n\n    // Dados da conta\n    texto.startsWith(\"AGÊNCIA:\") ||\n    texto.startsWith(\"PERÍODO:\") ||\n\n    // Saldos\n    texto.includes(\"SALDO ANTERIOR\") ||\n    texto.includes(\"SALDO DO DIA\") ||\n    texto.includes(\"S A L D O\") ||\n\n    // Informações adicionais\n    texto.startsWith(\"INFORMAÇÕES ADICIONAIS\") ||\n    texto.startsWith(\"LIMITE CLASSIC\") ||\n    texto.startsWith(\"TAXA LIMITE\") ||\n    texto.startsWith(\"TRIBUTOS\") ||\n    texto.startsWith(\"CUSTO EFETIVO\") ||\n    texto.startsWith(\"DATA VENC.\") ||\n    texto.startsWith(\"INFORMAÇÕES COMPLEMENTARES\") ||\n    texto.startsWith(\"VALOR TOTAL DEVIDO\") ||\n    texto.startsWith(\"VALOR LIBERADO\") ||\n    texto.startsWith(\"DESPESAS\") ||\n    texto.startsWith(\"TARIFA\") ||\n    texto.startsWith(\"TOTAL APLICAÇÕES\") ||\n\n    // Cliente\n    texto.startsWith(\"CLIENTE \") ||\n\n    // Rodapés\n    texto.startsWith(\"(*)\") ||\n    texto.startsWith(\"BB.COM.BR\") ||\n    texto.startsWith(\"BANCO DO BRASIL\") ||\n    texto.startsWith(\"CENTRAL DE ATENDIMENTO\") ||\n    texto.startsWith(\"SAC\") ||\n    texto.startsWith(\"OUVIDORIA\")\n  );\n}\n\n\n// ============================================================\n// LINHAS TÉCNICAS\n// ============================================================\n\nfunction ehLinhaTecnica(linha) {\n\n  const texto = linha.toUpperCase();\n\n  return (\n    texto.startsWith(\"ERRO.\") ||\n    texto.startsWith(\"180957420-\") ||\n    texto === \"RENDE FACIL\" ||\n    texto === \"SEGURO DE VIDA\" ||\n    texto === \"SEGURO CREDITO PROTEGIDO\"\n  );\n}\n\n\n// ============================================================\n// PROCESSAMENTO\n// ============================================================\n\nconst transacoes = [];\n\nlet transacaoAtual = null;\n\n\n// ============================================================\n// FINALIZA TRANSAÇÃO\n// ============================================================\n\nfunction finalizarTransacao() {\n\n  if (!transacaoAtual) {\n    return;\n  }\n\n\n  // ----------------------------------------------------------\n  // Junta TODAS as linhas da transação\n  // ----------------------------------------------------------\n\n  const partesDescricao = transacaoAtual.descricao\n    .map(item => item.trim())\n    .filter(Boolean);\n\n\n  // ----------------------------------------------------------\n  // Remove apenas repetições consecutivas\n  // ----------------------------------------------------------\n\n  const partesLimpa = [];\n\n  for (const parte of partesDescricao) {\n\n    if (\n      partesLimpa.length === 0 ||\n      partesLimpa[partesLimpa.length - 1] !== parte\n    ) {\n      partesLimpa.push(parte);\n    }\n  }\n\n\n  // ----------------------------------------------------------\n  // Monta descrição\n  // ----------------------------------------------------------\n\n  const descricao = partesLimpa.length\n    ? partesLimpa.join(\" - \")\n    : null;\n\n\n  // ----------------------------------------------------------\n  // Resultado\n  // ----------------------------------------------------------\n\n  const resultado = {\n\n    data: transacaoAtual.data,\n\n    ...(descricao\n      ? { descricao }\n      : {}),\n\n    ...(transacaoAtual.documento\n      ? { documento: transacaoAtual.documento }\n      : {}),\n\n    valor: formatarValor(transacaoAtual.valor),\n\n    tipoTransacao: transacaoAtual.tipoTransacao,\n\n    // Campo interno para ordenação\n    _ordem: transacaoAtual.ordem\n  };\n\n\n  transacoes.push(resultado);\n\n  transacaoAtual = null;\n}\n\n\n// ============================================================\n// PERCORRE TODAS AS LINHAS\n// ============================================================\n\nfor (let i = 0; i < linhas.length; i++) {\n\n  const linha = linhas[i];\n\n\n  // ==========================================================\n  // IGNORA LINHAS IRRELEVANTES\n  // ==========================================================\n\n  if (ignorarLinha(linha)) {\n    continue;\n  }\n\n\n  // ==========================================================\n  // VERIFICA SE É UMA NOVA TRANSAÇÃO\n  // ==========================================================\n\n  const match = linha.match(transacaoRegex);\n\n\n  if (match) {\n\n    // Finaliza a transação anterior\n    finalizarTransacao();\n\n\n    const [\n      ,\n      dataTransacao,\n      valorBruto,\n      sinal,\n      lote,\n      documento,\n      descricaoInicial\n    ] = match;\n\n\n    const valor = parseValor(valorBruto);\n\n\n    // --------------------------------------------------------\n    // (+) = ENTRADA\n    // (-) = SAÍDA\n    // --------------------------------------------------------\n\n    const tipoTransacao =\n      sinal === \"+\"\n        ? \"ENTRADA\"\n        : \"SAIDA\";\n\n\n    // --------------------------------------------------------\n    // Nova transação\n    // --------------------------------------------------------\n\n    transacaoAtual = {\n\n      data: dataTransacao,\n\n      valor,\n\n      tipoTransacao,\n\n      documento: documento || null,\n\n      descricao: descricaoInicial\n        ? [descricaoInicial]\n        : [],\n\n      ordem: i\n    };\n\n\n    continue;\n  }\n\n\n  // ==========================================================\n  // SE NÃO ESTAMOS DENTRO DE UMA TRANSAÇÃO\n  // ==========================================================\n\n  if (!transacaoAtual) {\n    continue;\n  }\n\n\n  // ==========================================================\n  // LINHAS TÉCNICAS\n  // ==========================================================\n\n  if (ehLinhaTecnica(linha)) {\n    continue;\n  }\n\n\n  // ==========================================================\n  // ADICIONA A LINHA INTEIRA À DESCRIÇÃO\n  // ==========================================================\n  //\n  // Não importa se é:\n  //\n  // 01/07 11:58\n  // SHARLENE F S MAGALHAES\n  // 123456\n  // QUALQUER OUTRA INFORMAÇÃO\n  //\n  // Tudo será preservado.\n  //\n  // ==========================================================\n\n  transacaoAtual.descricao.push(linha);\n}\n\n\n// ============================================================\n// FINALIZA ÚLTIMA TRANSAÇÃO\n// ============================================================\n\nfinalizarTransacao();\n\n\n// ============================================================\n// ORDENA POR DATA\n// ============================================================\n\ntransacoes.sort((a, b) => {\n\n  const dataA = dataParaTimestamp(a.data);\n  const dataB = dataParaTimestamp(b.data);\n\n\n  // Primeiro pela data\n  if (dataA !== dataB) {\n    return dataA - dataB;\n  }\n\n\n  // Depois mantém a ordem original\n  return a._ordem - b._ordem;\n});\n\n\n// ============================================================\n// REMOVE CAMPO INTERNO\n// ============================================================\n\nfor (const transacao of transacoes) {\n  delete transacao._ordem;\n}\n\n\n// ============================================================\n// RESULTADO\n// ============================================================\n\nconst count = transacoes.length;\n\nreturn {\n  bank,\n  clientName,\n  count,\n  transacoes\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "2852c84c-12d9-4b54-957c-32a4b203f4a2",
+      "name": "Script To Banco do Brasil"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Script To Banco do Brasil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "17ac456b-3555-4a59-827c-181c3399de03",
+  "meta": {
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "mHn6xh2CU1dXAU5O",
+  "tags": [
+    {
+      "updatedAt": "2026-08-18T13:34:56.305Z",
+      "createdAt": "2026-08-18T02:45:49.354Z",
+      "id": "0Lqd0eKMzm6iu2xx",
+      "name": "BOLT_SMART_TEXT"
+    }
+  ]
+}

@@ -1,0 +1,692 @@
+{
+  "name": "BOLT - MS00011 - C-INTERNAL-USER-PROFILE",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "users/cInternalUserProfile",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -144,
+        -400
+      ],
+      "id": "0fb90423-259a-4baf-93b5-427ec1e60ea9",
+      "name": "Webhook",
+      "webhookId": "7bb4251e-c1b5-459a-b299-a2b2d9f29aa8",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2320,
+        -688
+      ],
+      "id": "a2f0064c-d6bf-45bc-ad51-d6dc39a69920",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "scopes",
+        "include": "specifiedFields",
+        "fieldsToInclude": "mnemonic, scopes",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        752,
+        -688
+      ],
+      "id": "ea37241c-fa29-4d14-88ff-333565986c47",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "value": "={{ $('Webhook').item.json.body.password }}",
+        "dataPropertyName": "hash"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        -784
+      ],
+      "id": "ae3cf9c8-0b4c-440c-857e-6e4070e1910d",
+      "name": "Crypto"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f2ce1542-c9f7-4112-8281-9a1c92d0d0ee",
+              "leftValue": "={{ $json.code }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "fe88d3e2-d4ee-4a3a-85bb-d61a5ed9c561",
+              "leftValue": "={{ $json.user.scopes }}",
+              "rightValue": "users.create",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        304,
+        -496
+      ],
+      "id": "e75f6483-5719-4446-ace2-3d06f06b0d2c",
+      "name": "Verifica Validade do Solicitante"
+    },
+    {
+      "parameters": {
+        "collection": "scopes",
+        "options": {},
+        "query": "{\n  \"status\":\"active\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        -592
+      ],
+      "id": "2b6c4656-1845-410e-a5e7-2003501f59fc",
+      "name": "Resgatar Scopes",
+      "alwaysOutputData": false,
+      "retryOnFail": false,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ffc641e8-1492-4a05-8356-74914fac9c97",
+              "leftValue": "={{ $json.code }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1200,
+        -688
+      ],
+      "id": "872976ef-fe45-4505-bb99-38c1c20ec581",
+      "name": "Validar Saída"
+    },
+    {
+      "parameters": {
+        "jsCode": "const requesterScopes = $('Verifica Validade do Solicitante').first().json.user.scopes;\nlet requestStatus = \"\";\n\nconst request = $('Webhook').first().json.body;\nconst scopes = $input.first().json.scopes;\n\nconst messages = [];\n\nfunction isEmpty(value) {\n  return value == null || value === \"\";\n}\n\nfunction validateRequiredField(value, field, label) {\n  if (isEmpty(value)) {\n    messages.push(`O campo \"${label}\" (${field}) deve ser enviado na solicitação.`);\n  }\n}\n\nfunction passwordValidation(password) {\n  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%&*])[A-Za-z\\d!@#$%&*]{8,}$/.test(password);\n}\n\nconst scopeMap = new Map();\n\nscopes.forEach(scope => { scopeMap.set(scope.mnemonic, new Set(scope.scopes.map(s => String(s.id)))); });\n\nvalidateRequiredField(request.name, \"name\", \"Nome\");\nvalidateRequiredField(request.email, \"email\", \"E-Mail\");\nvalidateRequiredField(request.phone, \"phone\", \"Telefone\");\n\nif (isEmpty(request.password)) {\n  messages.push('O campo \"Senha\" (password) deve ser enviado na solicitação.');\n} else if (!passwordValidation(request.password)) {\n  messages.push(\"O formato da senha está incorreto.\");\n}\n\nif (!Array.isArray(request.scopes) || request.scopes.length === 0) {\n  messages.push('O campo \"Acessos\" (scopes) deve conter pelo menos um valor válido.');\n} else {\n  request.scopes.forEach(scope => {\n\n    const [mnemonic, value] = scope.split(\".\");\n\n    const validScopes = scopeMap.get(mnemonic);\n\n    if (!validScopes) {\n      messages.push(`O Scope ${scope} não é válido.`);\n      return;\n    }\n\n    if (!validScopes.has(value)) {\n      messages.push(`O Scope ${scope} é inválido.`);\n    }\n\n  });\n}\n\nrequestStatus = 'active';\n\nif (messages.length) {\n  return {\n    code: 304,\n    description: \"Bad Request\",\n    messages\n  };\n}\n\nreturn {\n  code: 0,\n  requestStatus\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        -688
+      ],
+      "id": "0b1dd482-82e5-4e59-97ed-7254e6cc79c1",
+      "name": "Analisar Valores Recebidos"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "10a26337-be45-4267-aebc-06c0710db0ef",
+              "name": "type",
+              "value": "INTERNAL",
+              "type": "string"
+            },
+            {
+              "id": "a2268acf-54f9-4f22-80d8-cb1f52588c5b",
+              "name": "name",
+              "value": "={{ $('Webhook').item.json.body.name }}",
+              "type": "string"
+            },
+            {
+              "id": "49fed34b-2db1-4b42-9927-3efecfa0a8f9",
+              "name": "email",
+              "value": "={{ $('Webhook').item.json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "3a2d06d2-064f-4cf0-a6d0-0fc7775f6d0e",
+              "name": "phone",
+              "value": "={{ $('Webhook').item.json.body.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "136b992d-a627-4afe-82aa-188c849823cb",
+              "name": "hash",
+              "value": "={{ $json.hash }}",
+              "type": "string"
+            },
+            {
+              "id": "1e3bb588-0bcb-4aa3-90d3-72c1f6016068",
+              "name": "password",
+              "value": "={{ $('Webhook').item.json.body.password }}",
+              "type": "string"
+            },
+            {
+              "id": "7e58e5d4-214b-4982-8f1c-adb4a530cadd",
+              "name": "scopes",
+              "value": "={{ $('Webhook').item.json.body.scopes }}",
+              "type": "array"
+            },
+            {
+              "id": "f5b0d1a5-3b5c-4dd5-8520-d3239c8049ef",
+              "name": "status",
+              "value": "={{ $json.requestStatus }}",
+              "type": "string"
+            },
+            {
+              "id": "b0a28e4b-ceea-4f7e-8ba7-2e64d137aad6",
+              "name": "createdAt",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "1153ecc5-5816-45be-9756-b52cfbe6ac97",
+              "name": "firstAccess",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1648,
+        -784
+      ],
+      "id": "820a09f9-22ce-4dfc-8154-31697e08f2d8",
+      "name": "Estrutura User"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "users",
+        "fields": "type, name, email, phone, hash, password, scopes, status, createdAt, firstAccess",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        1872,
+        -784
+      ],
+      "id": "94ac7b7a-726d-479a-8dba-b9ebc32fc5ae",
+      "name": "Create User",
+      "alwaysOutputData": false,
+      "retryOnFail": false,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1e73471c-181a-4a4f-ac76-a5c88c036cc0",
+              "name": "code",
+              "value": "=200",
+              "type": "number"
+            },
+            {
+              "id": "6e0f843e-4f53-4012-a426-5810e74312b3",
+              "name": "description",
+              "value": "=Solitação de Criação de Usuário recebida com sucesso.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2096,
+        -880
+      ],
+      "id": "ac2da29c-edbc-4839-8110-c1acd8e29904",
+      "name": "Response Message - Success"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 503
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2096,
+        -688
+      ],
+      "id": "649b79f5-8231-40b0-93bf-ac4d338618e1",
+      "name": "Respond to Webhook - ERROR - 405",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "aehBIgSQOIBZ1WRd",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/aehBIgSQOIBZ1WRd",
+          "cachedResultName": "BOLT - MS00007 - R-INTERNAL-USER-PROFILE"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        -496
+      ],
+      "id": "cc42eaf6-481a-48e2-a620-a4a74061a24a",
+      "name": "r-internal-user-profile"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        80,
+        -304
+      ],
+      "id": "b5cdbb7e-dce8-4a36-88fe-7e0e86a7e0ac",
+      "name": "Respond to Webhook - API ERROR - 301"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"code\": 302,\n  \"description\":\"O usuário não existe, não está ativo ou não tem permissão para executar a ação desejada\"\n}",
+        "options": {
+          "responseCode": 302
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        528,
+        -400
+      ],
+      "id": "79d47d7d-98da-4cf3-b02f-5f6a11e8d1c9",
+      "name": "Respond to Webhook - FUNC ERROR - 302"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 303,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        752,
+        -496
+      ],
+      "id": "a31750c2-2c3b-416a-9bb7-a142c684f73c",
+      "name": "Respond to Webhook - ERROR - 303"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0b7cfba6-b2c7-408a-b5d6-81c8ece5151e",
+              "name": "code",
+              "value": "={{ $json.code }}",
+              "type": "number"
+            },
+            {
+              "id": "a85bb47e-f96f-428d-beeb-1739a56ff09d",
+              "name": "description",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "bd4425e2-2778-40eb-a5d0-85581de775ea",
+              "name": "messages",
+              "value": "={{ $json.messages }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2096,
+        -496
+      ],
+      "id": "be0101c1-c591-41d0-acd7-90f693413d89",
+      "name": "Response Message - Error - 304"
+    },
+    {
+      "parameters": {
+        "fromEmail": "EQUIPE BOLT SECURiTY <projeto.olimpo.dev@gmail.com>",
+        "toEmail": "={{ $('Webhook').item.json.user.email }}",
+        "subject": "=Solicitação de Criação de CREDENCIAL ({{ $('Estrutura User').item.json.name }})",
+        "html": "=<!DOCTYPE html>\n\n<html lang=\"pt-BR\">\n\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Solicitação de Nova Credencial</title>\n</head>\n\n<body style=\"margin:0;padding:0;background-color:#f4f6f9;font-family:Arial,Helvetica,sans-serif;\">\n\n    <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"background-color:#f4f6f9;padding:30px 0;\">\n        <tr>\n            <td align=\"center\">\n\n                <table width=\"650\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"\n                    style=\"background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;\">\n\n                    <!-- Cabeçalho -->\n                    <tr>\n                        <td align=\"center\" style=\"background-color:#0f172a;padding:30px;\">\n                            <img src=\"https://raw.githubusercontent.com/projetoolimpodev-ai/images/main/logo.png\"\n                                alt=\"BOLT\" width=\"220\" style=\"display:block;border:0;max-width:220px;\">\n                        </td>\n                    </tr>\n\n                    <!-- Título -->\n                    <tr>\n                        <td style=\"padding:30px 40px 10px 40px;\">\n                            <h2 style=\"margin:0;color:#111827;\">\n                                Solicitação de Nova CREDENCIAL\n                            </h2>\n                        </td>\n                    </tr>\n\n                    <!-- Conteúdo -->\n                    <tr>\n                        <td style=\"padding:10px 40px 40px 40px;color:#374151;font-size:14px;line-height:1.7;\">\n\n                            <p>\n                                Olá,\n                                <strong>{{ $('Estrutura User').item.json.name }}</strong>,\n                            </p>\n\n                            <p>\n                                Uma nova <strong>CREDENCIAL</strong> foi criada para o seu uso:\n                            </p>\n\n                            <table width=\"100%\" cellpadding=\"10\" cellspacing=\"0\" border=\"0\"\n                                style=\"border-collapse:collapse;border:1px solid #d1d5db;margin-top:20px;margin-bottom:20px;\">\n\n                                <tr>\n                                    <td width=\"160\" style=\"background:#f9fafb;border-bottom:1px solid #d1d5db;\">\n                                        <strong>Nome</strong>\n                                    </td>\n                                    <td style=\"border-bottom:1px solid #d1d5db;\">\n                                        {{ $('Estrutura User').item.json.name }}\n                                    </td>\n                                </tr>\n\n                                <tr>\n                                    <td style=\"background:#f9fafb;border-bottom:1px solid #d1d5db;\">\n                                        <strong>E-Mail</strong>\n                                    </td>\n                                    <td style=\"border-bottom:1px solid #d1d5db;\">\n                                        {{ $('Estrutura User').item.json.email }}\n                                    </td>\n                                </tr>\n\n                                <tr>\n                                    <td style=\"background:#f9fafb;\">\n                                        <strong>Scopes</strong>\n                                    </td>\n                                    <td>\n                                        <ul style=\"margin:0;padding-left:20px;\">\n                                            {{\n                                            $('Estrutura User').item.json.scopes\n                                            .map(scope => `<li><strong>${scope}</strong></li>\n                                            `)\n                                            .join('')\n                                            }}\n                                        </ul>\n                                    </td>\n                                </tr>\n<tr>\n                                    <td style=\"background:#f9fafb;border-bottom:1px solid #d1d5db;\">\n                                        <strong>Senha Inicial</strong>\n                                    </td>\n                                    <td style=\"border-bottom:1px solid #d1d5db;\">\n                                        {{ $('Estrutura User').item.json.password }}\n                                    </td>\n                                </tr>\n\n                            </table>\n\n                            <p>\n                                Você precisa alterar a sua senha no Primeiro Acesso.\n                            </p>\n\n                                                        <br>\n\n                            <p style=\"margin-bottom:0;\">\n                                At.te.,\n                            </p>\n\n                            <p style=\"margin-top:5px;\">\n                                <strong>Equipe BOLT de Segurança</strong>\n                            </p>\n\n                        </td>\n                    </tr>\n\n                    <!-- Rodapé -->\n                    <tr>\n                        <td align=\"center\"\n                            style=\"background:#f9fafb;padding:20px;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;\">\n\n                            Esta é uma mensagem automática enviada pelo Sistema BOLT 2.0.<br>\n                            Não responda este e-mail.\n\n                        </td>\n                    </tr>\n\n                </table>\n\n            </td>\n        </tr>\n\n    </table>\n\n</body>\n\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2336,
+        -960
+      ],
+      "id": "caffb279-fcc2-42cd-9828-16c1c4892ea5",
+      "name": "Send an Email",
+      "webhookId": "044fd2d9-a7c1-4f0a-a054-023b2f0c1773",
+      "credentials": {
+        "smtp": {
+          "id": "QxcGYuqWTeCOl21v",
+          "name": "BREVO - SMTP - Account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "r-internal-user-profile",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - API ERROR - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Analisar Valores Recebidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crypto": {
+      "main": [
+        [
+          {
+            "node": "Estrutura User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica Validade do Solicitante": {
+      "main": [
+        [
+          {
+            "node": "Resgatar Scopes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - FUNC ERROR - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resgatar Scopes": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - ERROR - 303",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Saída": {
+      "main": [
+        [
+          {
+            "node": "Crypto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response Message - Error - 304",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analisar Valores Recebidos": {
+      "main": [
+        [
+          {
+            "node": "Validar Saída",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estrutura User": {
+      "main": [
+        [
+          {
+            "node": "Create User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create User": {
+      "main": [
+        [
+          {
+            "node": "Response Message - Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - ERROR - 405",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Message - Success": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook - ERROR - 405": {
+      "main": [
+        []
+      ]
+    },
+    "r-internal-user-profile": {
+      "main": [
+        [
+          {
+            "node": "Verifica Validade do Solicitante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook - API ERROR - 301": {
+      "main": [
+        []
+      ]
+    },
+    "Respond to Webhook - FUNC ERROR - 302": {
+      "main": [
+        []
+      ]
+    },
+    "Respond to Webhook - ERROR - 303": {
+      "main": [
+        []
+      ]
+    },
+    "Response Message - Error - 304": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "72d4c16a-11ac-4491-9fa2-6a7106c94982",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "Cc0sDIwjaZFA0QKK",
+  "tags": [
+    {
+      "updatedAt": "2026-08-14T15:38:33.884Z",
+      "createdAt": "2026-08-14T15:38:33.884Z",
+      "id": "TIEgpFmFDKg98WAN",
+      "name": "BOLT_USER"
+    }
+  ]
+}

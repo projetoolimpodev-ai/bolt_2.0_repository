@@ -1,0 +1,335 @@
+{
+  "name": "BOLT - MS00015 - C-PACKAGE",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "catalog/cPackage",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "65f33291-2d4f-4f04-9cae-300ced560296",
+      "name": "Webhook",
+      "webhookId": "c6370646-1b00-4917-8de0-cec2a2f0b989",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        0
+      ],
+      "id": "588aa74f-5934-48b0-b60d-3e1f84d85c81",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "915fb0e8-1701-4930-bee1-04a696f73e60",
+              "name": "code",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "82337763-bb20-4493-87cb-0a67c610153f",
+              "name": "description",
+              "value": "=Plano \"{{ $json.name }}\" criado com sucesso.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        0
+      ],
+      "id": "9d012ac6-84a1-4c44-9c04-4821ae3cb45f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0fc2caa0-af32-44ce-8bc7-61170c36d4bf",
+              "name": "name",
+              "value": "={{ $json.body.name }}",
+              "type": "string"
+            },
+            {
+              "id": "e597e301-30c8-4f96-ad07-ed3f19fda024",
+              "name": "mnemonic",
+              "value": "={{ $json.body.mnemonic }}",
+              "type": "string"
+            },
+            {
+              "id": "5ed0079c-af37-49c6-b395-fa685d98ccb5",
+              "name": "type",
+              "value": "={{ $json.body.type }}",
+              "type": "string"
+            },
+            {
+              "id": "965d5af7-5c98-44cf-b4a7-90bff514ce3a",
+              "name": "description",
+              "value": "={{ $json.body.description }}",
+              "type": "string"
+            },
+            {
+              "id": "77180ae0-aee8-4574-909c-53dc48eba70c",
+              "name": "details",
+              "value": "={{ $json.body.details }}",
+              "type": "array"
+            },
+            {
+              "id": "17a0a4bb-3c49-45eb-bfae-2f8e1e1972a8",
+              "name": "minSearchs",
+              "value": "={{ $json.body.minSearchs }}",
+              "type": "number"
+            },
+            {
+              "id": "dd2cabee-cc72-4f77-8ae1-e464a13ac111",
+              "name": "maxSearchs",
+              "value": "={{ $json.body.maxSearchs }}",
+              "type": "number"
+            },
+            {
+              "id": "e5209ee2-ff7d-46af-bf9e-2c665942b0e8",
+              "name": "interval",
+              "value": "={{ $json.body.interval }}",
+              "type": "number"
+            },
+            {
+              "id": "c6a6027e-b71b-4d94-8ab7-5a41afef488a",
+              "name": "initialPrice",
+              "value": "={{ $json.body.initialPrice }}",
+              "type": "number"
+            },
+            {
+              "id": "6d33faca-e0a6-48ad-aaad-f848cdff41f4",
+              "name": "unitPrice",
+              "value": "={{ $json.body.unitPrice }}",
+              "type": "number"
+            },
+            {
+              "id": "f5cdeda6-d8df-4ac8-b7e8-eb11cb8544ba",
+              "name": "maxPrice",
+              "value": "={{ $json.body.maxPrice }}",
+              "type": "number"
+            },
+            {
+              "id": "a7eab191-61fd-467b-b61a-1e47f3a17934",
+              "name": "maxUsers",
+              "value": "={{ $json.body.maxUsers }}",
+              "type": "number"
+            },
+            {
+              "id": "cd1989f1-7e70-4bf6-8318-3d0ab0230659",
+              "name": "unlimitedUsers",
+              "value": "={{ $json.body.unlimitedUsers }}",
+              "type": "boolean"
+            },
+            {
+              "id": "9bbe64c5-0d58-4cf2-bd2e-013c27124655",
+              "name": "scopes",
+              "value": "={{ $json.body.scopes }}",
+              "type": "array"
+            },
+            {
+              "id": "af172d5f-b089-4232-9f09-523e87940c7d",
+              "name": "requester",
+              "value": "={{ $json.body.requester }}",
+              "type": "string"
+            },
+            {
+              "id": "35de5806-94eb-4029-ae6a-070dbdb93ae6",
+              "name": "status",
+              "value": "new",
+              "type": "string"
+            },
+            {
+              "id": "91cef23f-4cbe-4ada-a4b0-e34544616e06",
+              "name": "createdAt",
+              "value": "={{ $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        96
+      ],
+      "id": "d25b2d77-8294-4828-9a00-a73d7a978750",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "packages",
+        "fields": "name, mnemonic, type, description, details, minSearchs, maxSearchs, interval, initialPrice, unitPrice, maxPrice, maxUsers, unlimitedUsers, scopes, requester, status, createdAt",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        96
+      ],
+      "id": "6354aca3-635e-4225-b64c-c535f5812466",
+      "name": "Insert documents",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        288
+      ],
+      "id": "0aae2c76-ab88-49b9-bd4f-2bbd8e8c0e02",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        192
+      ],
+      "id": "9f680778-1b13-4b75-bec4-5f8272b46b55",
+      "name": "Respond to Webhook - ERROR - 302",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Insert documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert documents": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - ERROR - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ffe134ea-546e-4d86-9612-e50bfd1ea0d0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "F0w8Mdy5ood40vha",
+  "tags": [
+    {
+      "updatedAt": "2026-08-16T05:50:15.534Z",
+      "createdAt": "2026-08-16T05:50:15.534Z",
+      "id": "DeJaE0Hgu67Bnh9Y",
+      "name": "BOLT_CATALOG"
+    }
+  ]
+}

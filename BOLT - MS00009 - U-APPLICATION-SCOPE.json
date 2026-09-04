@@ -1,0 +1,314 @@
+{
+  "name": "BOLT - MS00009 - U-APPLICATION-SCOPE",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "PATCH",
+        "path": "scopes/uApplicationScope",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -688,
+        1408
+      ],
+      "id": "6767eadc-1018-4ddc-9986-1e2ae7d7219d",
+      "name": "Webhook",
+      "webhookId": "f0c46b31-c500-49f7-99af-da705219169d",
+      "notesInFlow": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Recebe solicitações para atualizar dados de scopes."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        432,
+        1120
+      ],
+      "id": "66197d3f-c8b9-4fbb-aa4f-920385b470b9",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -464,
+        1504
+      ],
+      "id": "765e39f9-f614-40eb-b48b-c540086080a9",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "scopes",
+        "updateKey": "_id",
+        "fields": "={{ $json.update }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        1216
+      ],
+      "id": "c72c485d-c1e7-47f4-8486-cfbf07a993f9",
+      "name": "Update Scope",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "notesInFlow": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Atualiza as informações do Scope na base."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        432,
+        1312
+      ],
+      "id": "401d77f1-02f6-4284-996f-633d237532de",
+      "name": "Respond to Webhook - ERROR - 302",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d65e35f8-0954-45c4-96a6-999b3e6cceda",
+              "leftValue": "={{ $json.code }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "f2ce1542-c9f7-4112-8281-9a1c92d0d0ee",
+              "leftValue": "={{ $json.user.scopes }}",
+              "rightValue": "scopes.update",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -240,
+        1312
+      ],
+      "id": "bb469703-df59-4978-bb3d-6b31e7e12863",
+      "name": "Verifies Requester Validity",
+      "notesInFlow": true,
+      "notes": "Verifica se o passo anterior devolveu sucesso ou falha, e se o usuário retornado possui a permissão correta."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -16,
+        1408
+      ],
+      "id": "6e1734b2-2879-4a6e-84de-78bbec8d8a2c",
+      "name": "Respond to Webhook - Requester",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const data = $('Webhook').item.json.body;\nconst updateAux = [];\n\nif (data.name) {\n  updateAux.push(\"name\");\n}\nif (data.mnemonic) {\n  updateAux.push(\"mnemonic\");\n}\nif (data.description) {\n  updateAux.push(\"description\");\n}\nif (data.status) {\n  updateAux.push(\"status\");\n}\nif (data.scopes) {\n  updateAux.push(\"scopes\");\n}\nif (data.requester) {\n  updateAux.push(\"requester\");\n}\n\ndata.updatedAt = new Date;\nupdateAux.push(\"updatedAt\");\n\ndata.update = updateAux.join(\", \");\n\nreturn data;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        1216
+      ],
+      "id": "5bccea31-65c4-4604-9e40-d568bbadcf6b",
+      "name": "Set Update",
+      "notesInFlow": true,
+      "notes": "Cria estrutura que será atualizada no scope."
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "aehBIgSQOIBZ1WRd",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/aehBIgSQOIBZ1WRd",
+          "cachedResultName": "BOLT - MS00007 - R-INTERNAL-USER-PROFILE"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -464,
+        1312
+      ],
+      "id": "a94c4e19-7162-4c41-bbb9-29b08fe14650",
+      "name": "R-INTERNAL-USER-PROFILE",
+      "notesInFlow": true,
+      "notes": "Chama serviço que busca dados de um usuário. Neste fluxo, verificamos o ID do Solicitante."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "R-INTERNAL-USER-PROFILE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Scope": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - ERROR - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifies Requester Validity": {
+      "main": [
+        [
+          {
+            "node": "Set Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - Requester",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Update": {
+      "main": [
+        [
+          {
+            "node": "Update Scope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "R-INTERNAL-USER-PROFILE": {
+      "main": [
+        [
+          {
+            "node": "Verifies Requester Validity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3aa0d1a6-8eb6-4292-80ad-50b0307db3d3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "MI2teePPA1lZXF2I",
+  "tags": [
+    {
+      "updatedAt": "2026-08-14T13:47:41.111Z",
+      "createdAt": "2026-08-14T13:47:41.111Z",
+      "id": "J8nPupqmkTedb6NH",
+      "name": "BOLT_SCOPE"
+    }
+  ]
+}

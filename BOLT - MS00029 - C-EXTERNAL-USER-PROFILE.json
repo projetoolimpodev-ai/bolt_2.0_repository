@@ -1,0 +1,1056 @@
+{
+  "name": "BOLT - MS00029 - C-EXTERNAL-USER-PROFILE",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "users/cExternalUserProfile",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -144,
+        -448
+      ],
+      "id": "3631660b-f891-4bcf-8c3b-71e7d161ad8b",
+      "name": "Webhook",
+      "webhookId": "5a409890-a0ef-451b-8a65-d9fe7202b713",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2544,
+        -1024
+      ],
+      "id": "572da510-42a0-48c5-9624-8987a6aae1e9",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "value": "={{ $('Webhook').item.json.body.password }}",
+        "dataPropertyName": "hash"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        -1120
+      ],
+      "id": "ddd45fcd-48a7-438f-bc06-9e3880e13ee0",
+      "name": "Crypto"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f0405782-0035-4a24-90f2-403261667b26",
+              "leftValue": "={{ $json.user.name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "af788e85-0db2-450b-b34f-06f21998cc8c",
+              "leftValue": "={{ $json.user.status }}",
+              "rightValue": "active",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "f2ce1542-c9f7-4112-8281-9a1c92d0d0ee",
+              "leftValue": "={{ $json.user.scopes }}",
+              "rightValue": "users.create",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        304,
+        -544
+      ],
+      "id": "3e3ca3a8-128a-466b-8436-51518176ee1d",
+      "name": "Verifica Validade do Solicitante"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "10a26337-be45-4267-aebc-06c0710db0ef",
+              "name": "type",
+              "value": "EXTERNAL",
+              "type": "string"
+            },
+            {
+              "id": "a2268acf-54f9-4f22-80d8-cb1f52588c5b",
+              "name": "name",
+              "value": "={{ $('Webhook').item.json.body.name }}",
+              "type": "string"
+            },
+            {
+              "id": "49fed34b-2db1-4b42-9927-3efecfa0a8f9",
+              "name": "email",
+              "value": "={{ $('Webhook').item.json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "3a2d06d2-064f-4cf0-a6d0-0fc7775f6d0e",
+              "name": "phone",
+              "value": "={{ $('Webhook').item.json.body.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "136b992d-a627-4afe-82aa-188c849823cb",
+              "name": "hash",
+              "value": "={{ $json.hash }}",
+              "type": "string"
+            },
+            {
+              "id": "1e3bb588-0bcb-4aa3-90d3-72c1f6016068",
+              "name": "password",
+              "value": "={{ $('Webhook').item.json.body.password }}",
+              "type": "string"
+            },
+            {
+              "id": "7e58e5d4-214b-4982-8f1c-adb4a530cadd",
+              "name": "scopes",
+              "value": "={{ $('Webhook').item.json.body.scopes }}",
+              "type": "array"
+            },
+            {
+              "id": "f5b0d1a5-3b5c-4dd5-8520-d3239c8049ef",
+              "name": "status",
+              "value": "=active",
+              "type": "string"
+            },
+            {
+              "id": "b0a28e4b-ceea-4f7e-8ba7-2e64d137aad6",
+              "name": "createdAt",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "1153ecc5-5816-45be-9756-b52cfbe6ac97",
+              "name": "firstAccess",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "93dcf34e-3fce-4e0e-b386-0712dfa6843d",
+              "name": "tenantId",
+              "value": "={{ $('Webhook').item.json.body.tenantId }}",
+              "type": "string"
+            },
+            {
+              "id": "be4ca9a7-d01d-43ac-b25c-f7b17fd5254e",
+              "name": "tenantName",
+              "value": "={{ $('Webhook').item.json.body.tenantName }}",
+              "type": "string"
+            },
+            {
+              "id": "60028d3d-14cf-42be-9c13-a7312cb5aab7",
+              "name": "branch",
+              "value": "={{ $('Webhook').item.json.body.branch }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1872,
+        -1120
+      ],
+      "id": "1866fa00-e225-49af-8a1c-c67613d83d80",
+      "name": "Estrutura User"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "users",
+        "fields": "type, name, email, phone, hash, password, scopes, status, createdAt, firstAccess, tenantId, tenantName, branch",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        2096,
+        -1120
+      ],
+      "id": "962952a9-5c71-4e8f-867a-2429bbdadf5d",
+      "name": "Create User",
+      "alwaysOutputData": false,
+      "retryOnFail": false,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1e73471c-181a-4a4f-ac76-a5c88c036cc0",
+              "name": "code",
+              "value": "=200",
+              "type": "number"
+            },
+            {
+              "id": "6e0f843e-4f53-4012-a426-5810e74312b3",
+              "name": "description",
+              "value": "=Usuário {{ $json.name }} ({{ $json.email }}) criado para atender a Tenant {{ $('Get Tenant Data').item.json.identification.registeredCompanyName }}.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2320,
+        -1024
+      ],
+      "id": "4db94f3e-02d6-41d3-9627-90d9b8f1d6cd",
+      "name": "Response Message - Success"
+    },
+    {
+      "parameters": {
+        "fromEmail": "EQUIPE BOLT SECURiTY <projeto.olimpo.dev@gmail.com>",
+        "toEmail": "={{ $json.email }}",
+        "subject": "=Credencial Criada para BOLT 2.0 ({{ $json.name }})",
+        "html": "=<!DOCTYPE html>\n\n<html lang=\"pt-BR\">\n\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Criação de CREDENCIAL para BOLT 2.0</title>\n</head>\n\n<body style=\"margin:0;padding:0;background-color:#f4f6f9;font-family:Arial,Helvetica,sans-serif;\">\n\n    <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"background-color:#f4f6f9;padding:30px 0;\">\n        <tr>\n            <td align=\"center\">\n\n                <table width=\"650\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"\n                    style=\"background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;\">\n\n                    <!-- Cabeçalho -->\n                    <tr>\n                        <td align=\"center\" style=\"background-color:#0f172a;padding:30px;\">\n                            <img src=\"https://raw.githubusercontent.com/projetoolimpodev-ai/images/main/logo.png\"\n                                alt=\"BOLT\" width=\"220\" style=\"display:block;border:0;max-width:220px;\">\n                        </td>\n                    </tr>\n\n                    <!-- Título -->\n                    <tr>\n                        <td style=\"padding:30px 40px 10px 40px;\">\n                            <h2 style=\"margin:0;color:#111827;\">\n                                Criação de CREDENCIAL para BOLT 2.0\n                            </h2>\n                        </td>\n                    </tr>\n\n                    <!-- Conteúdo -->\n                    <tr>\n                        <td style=\"padding:10px 40px 40px 40px;color:#374151;font-size:14px;line-height:1.7;\">\n\n                            <p>\n                                Olá,\n                                <strong>{{ $json.name }}</strong>,\n                            </p>\n\n                            <p>\n                                Sua credencial para Acessar o <b>BOLT 2.0</b> foi criada com sucesso:\n                            </p>\n\n                            <table width=\"100%\" cellpadding=\"10\" cellspacing=\"0\" border=\"0\"\n                                style=\"border-collapse:collapse;border:1px solid #d1d5db;margin-top:20px;margin-bottom:20px;\">\n\n                                <tr>\n                                    <td width=\"160\" style=\"background:#f9fafb;border-bottom:1px solid #d1d5db;\">\n                                        <strong>E-Mail de Acesso</strong>\n                                    </td>\n                                    <td style=\"border-bottom:1px solid #d1d5db;\">\n                                        {{ $json.email }}\n                                    </td>\n                                </tr>\n\n                                <tr>\n                                    <td style=\"background:#f9fafb;border-bottom:1px solid #d1d5db;\">\n                                        <strong>Senha Temporária</strong>\n                                    </td>\n                                    <td style=\"border-bottom:1px solid #d1d5db;\">\n                                        {{ $json.password }}\n                                    </td>\n                                </tr>\n\n                                <tr>\n                                    <td style=\"background:#f9fafb;\">\n                                        <strong>Scopes</strong>\n                                    </td>\n                                    <td>\n                                        <ul style=\"margin:0;padding-left:20px;\">\n                                            {{\n                                            $json.scopes\n                                            .map(scope => `<li><strong>${scope}</strong></li>\n                                            `)\n                                            .join('')\n                                            }}\n                                        </ul>\n                                    </td>\n                                </tr>\n\n                            </table>\n\n                            <p>\n                                A senha deve ser alterada no primeiro acesso.\n                            </p>\n\n                            <p>\n                                Em caso de dúvida entre em contato com o solicitante da sua empresa.\n                            </p>\n\n                            <br>\n\n                            <p style=\"margin-bottom:0;\">\n                                At.te.,\n                            </p>\n\n                            <p style=\"margin-top:5px;\">\n                                <strong>Equipe BOLT de Segurança</strong>\n                            </p>\n\n                        </td>\n                    </tr>\n\n                    <!-- Rodapé -->\n                    <tr>\n                        <td align=\"center\"\n                            style=\"background:#f9fafb;padding:20px;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;\">\n\n                            Esta é uma mensagem automática enviada pelo Sistema BOLT.<br>\n                            Não responda este e-mail.\n\n                        </td>\n                    </tr>\n\n                </table>\n\n            </td>\n        </tr>\n\n    </table>\n\n</body>\n\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2320,
+        -1216
+      ],
+      "id": "aab1503f-8f5f-4f03-b0aa-3b616fdfd8b5",
+      "name": "Send an Email",
+      "webhookId": "42a441f2-c934-4edc-8be3-22a9bec4fd8a",
+      "credentials": {
+        "smtp": {
+          "id": "QxcGYuqWTeCOl21v",
+          "name": "BREVO - SMTP - Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "aehBIgSQOIBZ1WRd",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/aehBIgSQOIBZ1WRd",
+          "cachedResultName": "BOLT - MS00007 - R-INTERNAL-USER-PROFILE"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        -544
+      ],
+      "id": "78e5632d-a6cc-42a8-919f-34d2eafa2042",
+      "name": "r-internal-user-profile"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3216,
+        -1024
+      ],
+      "id": "1f45f319-62ea-4680-9ee0-ca23600208c3",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "field": "_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        -1024
+      ],
+      "id": "fb045f2e-7e8f-4bcf-aa89-cc57639f1daa",
+      "name": "Summarize"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        80,
+        -352
+      ],
+      "id": "a85392af-c26d-4228-b31a-c30aaf6d8191",
+      "name": "Respond to Webhook - API ERROR - 301"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"code\": 302,\n  \"description\":\"O usuário não existe, não está ativo ou não tem permissão para executar a ação desejada\"\n}",
+        "options": {
+          "responseCode": 302
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        528,
+        -544
+      ],
+      "id": "0e75474d-37d2-46e4-87da-31f98bb7c4c3",
+      "name": "Respond to Webhook - 302"
+    },
+    {
+      "parameters": {
+        "collection": "tenants",
+        "options": {},
+        "query": "={\n  \"_id\":\"{{ $('Webhook').item.json.body.tenantId }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        -736
+      ],
+      "id": "ce5f6cdc-4de3-4fbb-ac49-c04ad2da0325",
+      "name": "Get Tenant Data",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "collection": "packages",
+        "options": {},
+        "query": "={\n  \"mnemonic\":\"{{ $json.package.packegeID }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        752,
+        -832
+      ],
+      "id": "55f7825a-8f4b-4c42-9a87-2751765dd568",
+      "name": "Get Package Data",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "collection": "users",
+        "options": {},
+        "query": "={\n  \"tenantId\":\"{{ $('Webhook').item.json.body.tenantId }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        976,
+        -928
+      ],
+      "id": "633785a3-269f-482b-bb27-4450d3c42c55",
+      "name": "Get Users By Tenant",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 303,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        752,
+        -640
+      ],
+      "id": "5502892f-92c9-4ba1-887a-e22564f00806",
+      "name": "Respond to Webhook - 303"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 304,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        976,
+        -736
+      ],
+      "id": "398a0def-e756-45d1-980c-3d3222f1385e",
+      "name": "Respond to Webhook - 304"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 305,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1200,
+        -832
+      ],
+      "id": "9d63eac5-2bb5-4c0d-a366-f61d4850986b",
+      "name": "Respond to Webhook - 305"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4fd5676a-35f7-4a9f-aa9c-d11e0d9441f9",
+              "leftValue": "={{ $('Get Package Data').item.json.unlimitedUsers }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "2973c9a8-c0e5-4e2a-ba21-58d5922386b3",
+              "leftValue": "={{ $json.count__id }}",
+              "rightValue": "={{ $('Get Package Data').item.json.maxUsers }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1424,
+        -1024
+      ],
+      "id": "6a0bbadb-ffd2-4aaa-9f61-331a32d3e184",
+      "name": "Verify Max Users"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1525c9aa-0827-426b-8edd-cdfeb7c4afd0",
+              "name": "code",
+              "value": 306,
+              "type": "number"
+            },
+            {
+              "id": "976e11da-ef36-49b1-8f55-ca42c7b92c2e",
+              "name": "description",
+              "value": "O limite de usuários cadastrados para essa Tenant já foi atingido.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1648,
+        -928
+      ],
+      "id": "17d04280-a752-4cc2-bf45-e4c853e3d1c8",
+      "name": "Set Max Users Error"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1872,
+        -928
+      ],
+      "id": "ae873ed4-b2b5-4b5a-a442-46db0c48898c",
+      "name": "Respond to Webhook - 306"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 307,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2320,
+        -832
+      ],
+      "id": "96fa9a46-e428-4c38-acbc-7b14585499c5",
+      "name": "Respond to Webhook - 307",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "collection": "tenants",
+        "options": {},
+        "query": "={\n  \"_id\":\"{{ $('Create User').item.json.tenantId }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        2768,
+        -1024
+      ],
+      "id": "a05ced4a-6de4-4bf0-bb26-6f2c73a1b598",
+      "name": "Get Actual Tenant",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9a15f54b-bc49-4d04-988f-ec7abb881ba0",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "waiting users",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2992,
+        -1120
+      ],
+      "id": "1db44e61-729e-45f4-bfc5-14ff60a85a2c",
+      "name": "Check Tenant Status"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6b727776-29db-4813-a47d-fa6dafbbc65c",
+              "name": "_id",
+              "value": "={{ $json._id }}",
+              "type": "object"
+            },
+            {
+              "id": "857d3ad2-bbc5-47aa-8078-97d0a76aca1b",
+              "name": "status",
+              "value": "active",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3216,
+        -1216
+      ],
+      "id": "2573e2e0-537d-4c3b-b9ac-6ef940e178dc",
+      "name": "Set Active Status To Tenant"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "tenants",
+        "updateKey": "_id",
+        "fields": "status",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        3440,
+        -1216
+      ],
+      "id": "8d68a9ea-a8a5-4318-9294-2b2e94db846d",
+      "name": "Update Tenant To Active",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 308,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2992,
+        -928
+      ],
+      "id": "ee0ebd6b-b98d-4553-a58e-f2164a314493",
+      "name": "Respond to Webhook - 308",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 309,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3664,
+        -1216
+      ],
+      "id": "9784572c-ef7c-4474-8b0a-06f073b1ff79",
+      "name": "Respond to Webhook - 309",
+      "alwaysOutputData": false
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "r-internal-user-profile",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - API ERROR - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crypto": {
+      "main": [
+        [
+          {
+            "node": "Estrutura User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica Validade do Solicitante": {
+      "main": [
+        [
+          {
+            "node": "Get Tenant Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estrutura User": {
+      "main": [
+        [
+          {
+            "node": "Create User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create User": {
+      "main": [
+        [
+          {
+            "node": "Response Message - Success",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 307",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Message - Success": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "r-internal-user-profile": {
+      "main": [
+        [
+          {
+            "node": "Verifica Validade do Solicitante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Actual Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "Verify Max Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook - API ERROR - 301": {
+      "main": [
+        []
+      ]
+    },
+    "Respond to Webhook - 302": {
+      "main": [
+        []
+      ]
+    },
+    "Get Tenant Data": {
+      "main": [
+        [
+          {
+            "node": "Get Package Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 303",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Package Data": {
+      "main": [
+        [
+          {
+            "node": "Get Users By Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 304",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Users By Tenant": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 305",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Max Users": {
+      "main": [
+        [
+          {
+            "node": "Crypto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Max Users Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Max Users Error": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - 306",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook - 307": {
+      "main": [
+        []
+      ]
+    },
+    "Get Actual Tenant": {
+      "main": [
+        [
+          {
+            "node": "Check Tenant Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 308",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Tenant Status": {
+      "main": [
+        [
+          {
+            "node": "Set Active Status To Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Active Status To Tenant": {
+      "main": [
+        [
+          {
+            "node": "Update Tenant To Active",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Tenant To Active": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Respond to Webhook - 309",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "dbace2c1-c006-417b-9d9b-f3860dc26c6f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "6ocNhmTUL21Z32j9",
+  "tags": [
+    {
+      "updatedAt": "2026-08-14T15:38:33.884Z",
+      "createdAt": "2026-08-14T15:38:33.884Z",
+      "id": "TIEgpFmFDKg98WAN",
+      "name": "BOLT_USER"
+    }
+  ]
+}

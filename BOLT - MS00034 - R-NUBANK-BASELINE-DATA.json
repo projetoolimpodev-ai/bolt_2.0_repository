@@ -1,0 +1,65 @@
+{
+  "name": "BOLT - MS00034 - R-NUBANK-BASELINE-DATA",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "75046045-cfeb-47a7-9c75-1244df18294b",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const bank = \"NUBANK\";\nconst linhas = $input.item.json.lines;\n\n\n// =========================================================\n// 2. CLIENTE\n// =========================================================\n\nconst clientName = linhas[0];\n\n\n// =========================================================\n// 3. CONFIGURAÇÕES\n// =========================================================\n\nconst meses = {\n  JAN: \"01\",\n  FEV: \"02\",\n  MAR: \"03\",\n  ABR: \"04\",\n  MAI: \"05\",\n  JUN: \"06\",\n  JUL: \"07\",\n  AGO: \"08\",\n  SET: \"09\",\n  OUT: \"10\",\n  NOV: \"11\",\n  DEZ: \"12\"\n};\n\n\n// Data de movimentação\nconst regexData =\n  /^(\\d{2})\\s+(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)\\s+(\\d{4})\\b/i;\n\n\n// Valor\nconst regexValor =\n  /^\\d{1,3}(?:\\.\\d{3})*,\\d{2}$/;\n\n\n// Valor no final da linha\nconst regexValorFinal =\n  /(\\d{1,3}(?:\\.\\d{3})*,\\d{2})$/;\n\n\n// =========================================================\n// 4. IDENTIFICAR LINHAS DE RESUMO / RODAPÉ\n// =========================================================\n\nfunction ehResumoOuRodape(linha) {\n\n  const texto = linha\n    .toUpperCase()\n    .replace(/\\s+/g, \" \")\n    .trim();\n\n\n  // -------------------------------------------------------\n  // RESUMO DA CONTA\n  // -------------------------------------------------------\n\n  if (\n    texto.includes(\"SALDO INICIAL\") ||\n    texto.includes(\"RENDIMENTO LÍQUIDO\") ||\n    texto.includes(\"SALDO FINAL DO PERÍODO\") ||\n    texto.includes(\"TOTAL DE ENTRADAS\") ||\n    texto.includes(\"TOTAL DE SAÍDAS\")\n  ) {\n    return true;\n  }\n\n\n  // -------------------------------------------------------\n  // TEXTOS LEGAIS / RODAPÉ\n  // -------------------------------------------------------\n\n  if (\n    texto.includes(\"O SALDO LÍQUIDO CORRESPONDE\") ||\n    texto.includes(\"NÃO NOS RESPONSABILIZAMOS\") ||\n    texto.includes(\"ASSEGURAMOS A AUTENTICIDADE\") ||\n    texto.includes(\"NU FINANCEIRA S.A.\") ||\n    texto.includes(\"NU PAGAMENTOS S.A.\") ||\n    texto.includes(\"SOCIEDADE DE CREDITO\") ||\n    texto.includes(\"INSTITUIÇÃO DE PAGAMENTO\") ||\n    texto.includes(\"CNPJ:\")\n  ) {\n    return true;\n  }\n\n\n  // -------------------------------------------------------\n  // RODAPÉ DO DOCUMENTO\n  // -------------------------------------------------------\n\n  if (\n    texto.includes(\"TEM ALGUMA DÚVIDA\") ||\n    texto.includes(\"MANDE UMA MENSAGEM\") ||\n    texto.includes(\"ATENDIMENTO 24H\") ||\n    texto.includes(\"DISPONÍVEIS EM NUBANK.COM.BR\") ||\n    texto.includes(\"ATENDIMENTO DAS 8H ÀS 18H\") ||\n    texto.includes(\"EXTRATO GERADO DIA\")\n  ) {\n    return true;\n  }\n\n\n  // -------------------------------------------------------\n  // PAGINAÇÃO\n  // -------------------------------------------------------\n\n  if (/^\\d+\\s+DE\\s+\\d+$/.test(texto)) {\n    return true;\n  }\n\n\n  return false;\n}\n\n\n// =========================================================\n// 5. DETERMINAR TIPO\n// =========================================================\n\nfunction determinarTipo(descricao) {\n\n  const texto = descricao.toUpperCase();\n\n\n  // Entradas\n  if (\n    texto.includes(\"TRANSFERÊNCIA RECEBIDA\") ||\n    texto.includes(\"CRÉDITO EM CONTA\") ||\n    texto.includes(\"VALOR ADICIONADO\") ||\n    texto.includes(\"REEMBOLSO RECEBIDO\") ||\n    texto.includes(\"RESGATE RDB\") ||\n    texto.includes(\"RENDIMENTO\") ||\n    texto.includes(\"DEPÓSITO DE EMPRÉSTIMO\")\n  ) {\n    return \"ENTRADA\";\n  }\n\n\n  // Saídas\n  return \"SAIDA\";\n}\n\n// =========================================================\n// 5.1 LIMPAR DESCRIÇÃO\n// =========================================================\n\nfunction limparDescricao(descricao) {\n\n  descricao = descricao\n    .replace(/\\s+/g, \" \")\n    .trim();\n\n  // Procura o início real de uma movimentação.\n  // Tudo que vier antes será descartado.\n  const regexInicioMovimentacao =\n    /(Transferência|Compra|Pagamento|Aplicação RDB|Resgate RDB|Crédito em conta|Valor adicionado|Reembolso|Pix|Depósito|Estorno|Tarifa|TED|DOC|Boleto)/i;\n\n  const match = descricao.match(regexInicioMovimentacao);\n\n  if (match) {\n    descricao = descricao.substring(match.index).trim();\n  }\n\n  return descricao;\n}\n\n\n// =========================================================\n// 6. AGRUPAR POR DATA\n// =========================================================\n\nconst dias = [];\n\nlet diaAtual = null;\n\nfor (const linha of linhas) {\n\n  const match = linha.match(regexData);\n\n  if (match) {\n\n    const [, dia, mesTexto, ano] = match;\n\n    diaAtual = {\n      data: `${dia}/${meses[mesTexto.toUpperCase()]}/${ano}`,\n      linhas: []\n    };\n\n    dias.push(diaAtual);\n\n    continue;\n  }\n\n  if (diaAtual) {\n    diaAtual.linhas.push(linha);\n  }\n}\n\n\n// =========================================================\n// 7. EXTRAIR TRANSAÇÕES\n// =========================================================\n\nconst transacoes = [];\n\n\nfor (const dia of dias) {\n\n  let descricaoAtual = [];\n\n  let bloqueado = false;\n\n\n  // -------------------------------------------------------\n  // FINALIZAR TRANSAÇÃO\n  // -------------------------------------------------------\n\n  function finalizarTransacao(valor) {\n\n    if (descricaoAtual.length === 0) {\n      return;\n    }\n\n\n    const descricao = limparDescricao(\n  descricaoAtual.join(\" \")\n);\n\n\n    // Não aceitar descrições de resumo\n    if (ehResumoOuRodape(descricao)) {\n\n      descricaoAtual = [];\n\n      return;\n    }\n\n\n    // Não aceitar descrições extremamente pequenas\n    if (\n      descricao === \"+\" ||\n      descricao === \"-\" ||\n      descricao === \"C\" ||\n      descricao === \"D\"\n    ) {\n\n      descricaoAtual = [];\n\n      return;\n    }\n\n\n    // -----------------------------------------------------\n    // CRIAR TRANSAÇÃO\n    // -----------------------------------------------------\n\n    transacoes.push({\n      data: dia.data,\n      documento: \"\",\n      descricao: limparDescricao(descricao),\n      valor,\n      tipoTransacao: determinarTipo(descricao)\n    });\n\n\n    descricaoAtual = [];\n  }\n\n\n  // -------------------------------------------------------\n  // PERCORRER LINHAS\n  // -------------------------------------------------------\n\n  for (const linha of dia.linhas) {\n\n\n    // -----------------------------------------------------\n    // SE ENCONTROU RESUMO, BLOQUEIA O RESTANTE DO DIA\n    // -----------------------------------------------------\n\n    if (ehResumoOuRodape(linha)) {\n\n      descricaoAtual = [];\n\n      // Se for resumo financeiro, não queremos\n      // interpretar os valores que aparecem depois.\n      if (\n        linha.toUpperCase().includes(\"SALDO INICIAL\") ||\n        linha.toUpperCase().includes(\"SALDO FINAL\") ||\n        linha.toUpperCase().includes(\"RENDIMENTO LÍQUIDO\")\n      ) {\n        bloqueado = true;\n      }\n\n      continue;\n    }\n\n\n    // Depois do resumo, ignora tudo\n    if (bloqueado) {\n      continue;\n    }\n\n\n    // -----------------------------------------------------\n    // VALOR SOZINHO\n    // -----------------------------------------------------\n\n    if (regexValor.test(linha)) {\n\n      finalizarTransacao(linha);\n\n      continue;\n    }\n\n\n    // -----------------------------------------------------\n    // DESCRIÇÃO + VALOR\n    // -----------------------------------------------------\n\n    const matchValor = linha.match(regexValorFinal);\n\n    if (matchValor) {\n\n      const valor = matchValor[1];\n\n      const descricao = linha\n        .slice(0, matchValor.index)\n        .trim();\n\n\n      // Se havia linhas anteriores, elas pertencem\n      // à transação atual.\n      if (descricaoAtual.length > 0) {\n\n        descricaoAtual.push(descricao);\n\n        finalizarTransacao(valor);\n\n        continue;\n      }\n\n\n      // Caso seja uma transação completa em uma linha\n      if (descricao) {\n\n        // Não aceitar sinais isolados\n        if (\n          descricao !== \"+\" &&\n          descricao !== \"-\"\n        ) {\n\n          transacoes.push({\n            data: dia.data,\n            documento: \"\",\n            descricao,\n            valor,\n            tipoTransacao: determinarTipo(descricao)\n          });\n        }\n      }\n\n      continue;\n    }\n\n\n    // -----------------------------------------------------\n    // CONTINUAÇÃO DA DESCRIÇÃO\n    // -----------------------------------------------------\n\n    descricaoAtual.push(linha);\n  }\n\n\n  // Limpa qualquer resto\n  descricaoAtual = [];\n}\n\n\n// =========================================================\n// 8. RETORNO\n// =========================================================\n\nlet count = transacoes.length;\n\nreturn {\n  bank,\n  clientName,\n  count,\n  transacoes\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "602f78df-3cc3-42ee-8bc7-85ad96f9bddb",
+      "name": "Script To NUBANK"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Script To NUBANK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "07a5a8f2-215a-4e43-93a6-6f3cb01f9ea0",
+  "meta": {
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "N9x8FhruINwUEZmx",
+  "tags": [
+    {
+      "updatedAt": "2026-08-18T13:34:56.305Z",
+      "createdAt": "2026-08-18T02:45:49.354Z",
+      "id": "0Lqd0eKMzm6iu2xx",
+      "name": "BOLT_SMART_TEXT"
+    }
+  ]
+}

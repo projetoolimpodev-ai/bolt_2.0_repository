@@ -1,0 +1,258 @@
+{
+  "name": "BOLT - MS00040 - R-CONSUMPTION",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "consumption/rConsumption",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "32d54bff-182c-430b-926d-280558df1918",
+      "name": "Webhook",
+      "webhookId": "0f9e4d12-204b-4cb4-941d-8c40bccf7e30",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "collection": "tenants",
+        "options": {},
+        "query": "={\n  \"_id\":\"{{ $json.query._id }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "b7bd5124-d323-4457-b8d3-9c9130d7c2f0",
+      "name": "Find Tenant",
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "58da7252-d805-48be-b2e0-009f2842f75c",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "collection": "consumptions",
+        "options": {},
+        "query": "={\n  \"tenant\": \"{{ $json._id }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "6c484288-5feb-4a56-b2e6-af8e10fa977b",
+      "name": "Find documents",
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "596a2429-d168-4178-8bdf-83f07ad43523",
+              "name": "_id",
+              "value": "={{ $('Find Tenant').item.json._id }}",
+              "type": "string"
+            },
+            {
+              "id": "6faae057-c027-4e27-b76a-24090e85ae29",
+              "name": "identification.registeredCompanyName",
+              "value": "={{ $('Find Tenant').item.json.identification.registeredCompanyName }}",
+              "type": "string"
+            },
+            {
+              "id": "f7f70480-a69f-4de0-833f-d7577dff5aa3",
+              "name": "identification.tradeName",
+              "value": "={{ $('Find Tenant').item.json.identification.tradeName }}",
+              "type": "string"
+            },
+            {
+              "id": "c6ba8739-fc66-4fd7-8d9b-ffd36e321ad7",
+              "name": "identification.cnpj",
+              "value": "={{ $('Find Tenant').item.json.identification.cnpj }}",
+              "type": "string"
+            },
+            {
+              "id": "43368ae4-bffa-42ec-859d-f9894b0dbf4b",
+              "name": "package.packegeID",
+              "value": "={{ $('Find Tenant').item.json.package.packegeID }}",
+              "type": "string"
+            },
+            {
+              "id": "f5d54c85-0e48-4415-b3bf-0462a01fc341",
+              "name": "package.namePackage",
+              "value": "={{ $('Find Tenant').item.json.package.namePackage }}",
+              "type": "string"
+            },
+            {
+              "id": "31bbf900-17ac-47ac-a63b-4618775875a3",
+              "name": "package.maxContractedSearches",
+              "value": "={{ $('Find Tenant').item.json.package.maxContractedSearches }}",
+              "type": "number"
+            },
+            {
+              "id": "1187576c-c486-428d-8742-2c08d8570647",
+              "name": "package.price",
+              "value": "={{ $('Find Tenant').item.json.package.price }}",
+              "type": "number"
+            },
+            {
+              "id": "0c4cda58-4c88-4811-92f7-b9127fb527ef",
+              "name": "package.searchsUsed",
+              "value": "={{ $('Find Tenant').item.json.package.searchsUsed }}",
+              "type": "number"
+            },
+            {
+              "id": "02454923-9f43-40d2-b68a-544276bcd6ea",
+              "name": "package.contractType",
+              "value": "={{ $('Find Tenant').item.json.package.contractType }}",
+              "type": "string"
+            },
+            {
+              "id": "221f0872-5643-48c0-a279-bd9c0aa3020c",
+              "name": "hist",
+              "value": "={{ $json.hist }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        0
+      ],
+      "id": "a0407108-0f5e-4380-b427-2d5e80aee1e6",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "let consumption = [];\n\nfor (const item of $input.all()) {\n  consumption.push(item.json);\n}\n\nreturn { hist: consumption };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "ce5cf7dd-7d59-417c-80aa-5fb77944becd",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Find Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Tenant": {
+      "main": [
+        [
+          {
+            "node": "Find documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find documents": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4c54981d-ff33-43d2-b783-81ebde2b98c1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "poNtAEuosH6Atln4",
+  "tags": [
+    {
+      "updatedAt": "2026-08-18T17:49:18.388Z",
+      "createdAt": "2026-08-18T17:49:18.388Z",
+      "id": "EUspZoueljICKFU6",
+      "name": "BOLT_CONSUMPTION"
+    }
+  ]
+}

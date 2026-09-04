@@ -1,0 +1,171 @@
+{
+  "name": "BOLT - MS00028 - R-PACKAGE-DATA",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "catalog/rPackageData",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "6458967b-ae58-4c1f-a0ef-bef9bba94762",
+      "name": "Webhook",
+      "webhookId": "76c28444-f386-4393-89cf-8193497f1d58",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "collection": "plans",
+        "options": {},
+        "query": "={\n  \"mnemonic\":\"{{ $json.query.mnemonic}}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        96
+      ],
+      "id": "bf56bc5e-c878-4d69-96f3-57bcaf4575c0",
+      "name": "Find documents",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "f4a3ee2b-25ee-4cf3-b5fb-47c705d26e09",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        288
+      ],
+      "id": "916c18a3-1151-4e4b-9953-132fc8aee8ae",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        192
+      ],
+      "id": "08f12ec7-1879-4218-af61-cceb21d17063",
+      "name": "Respond to Webhook - 302",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Find documents",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find documents": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8466f9ba-411e-4e88-ae48-f439a15485ae",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "KZIT9GHLac1z47iL",
+  "tags": [
+    {
+      "updatedAt": "2026-08-16T05:50:15.534Z",
+      "createdAt": "2026-08-16T05:50:15.534Z",
+      "id": "DeJaE0Hgu67Bnh9Y",
+      "name": "BOLT_CATALOG"
+    },
+    {
+      "updatedAt": "2026-08-14T15:38:33.884Z",
+      "createdAt": "2026-08-14T15:38:33.884Z",
+      "id": "TIEgpFmFDKg98WAN",
+      "name": "BOLT_USER"
+    }
+  ]
+}

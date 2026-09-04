@@ -1,0 +1,420 @@
+{
+  "name": "BOLT - MS00007 - R-INTERNAL-USER-PROFILE",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        -464
+      ],
+      "id": "11965665-7634-4f5d-8f95-df9aa5722a0f",
+      "name": "When Executed by Another Workflow",
+      "notesInFlow": true,
+      "notes": "Recebe dados de fluxos, onde é necessário o envio do campo \"_id\" do usuário interno."
+    },
+    {
+      "parameters": {
+        "collection": "users",
+        "options": {},
+        "query": "={\n  \"_id\": \"{{ $json.requester }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        -320
+      ],
+      "id": "523e01ce-e7f5-4050-aa42-14d8e192718b",
+      "name": "Find Internal User",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "notesInFlow": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Busca o usuário no banco de dados."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "00878196-b7f0-4495-8d29-54c6fbaabf07",
+              "name": "code",
+              "value": 302,
+              "type": "number"
+            },
+            {
+              "id": "a95cf9dd-8150-44d9-a33b-25e246375d19",
+              "name": "description",
+              "value": "Requesting User Not Found",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        864,
+        -320
+      ],
+      "id": "dfe84963-ebb9-43d5-bb97-3bc7d06d8b20",
+      "name": "No Users",
+      "notesInFlow": true,
+      "notes": "Devolve mensagem de falha informando que o usuário não existe."
+    },
+    {
+      "parameters": {
+        "path": "users/rInternalUserProfile",
+        "authentication": "basicAuth",
+        "responseMode": "lastNode",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -32,
+        -224
+      ],
+      "id": "94b5d430-b026-4392-a930-a8baefd78eea",
+      "name": "Webhook",
+      "webhookId": "6952dd7d-8421-40b1-90e0-4b69f52890d7",
+      "notesInFlow": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Recebe solicitação de consulta, onde é necessário o envio do campo \"_id\" do usuário interno."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "13189de9-fabb-4ce2-a8e1-4113f4a4da5d",
+              "leftValue": "={{ $json.body.executor || $json.body.requester || $json.query.executor || $json.query.requester }}",
+              "rightValue": "6a2c4eef7935b060f2e9a610",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        192,
+        -416
+      ],
+      "id": "411842bc-698c-48fd-be50-ffac0e040ef3",
+      "name": "Verify Master User",
+      "notesInFlow": true,
+      "notes": "Verifica se o usuário que está solicitação é o usuário Master, utilizado para Testes na ferramenta e ações administrativas."
+    },
+    {
+      "parameters": {
+        "collection": "user_master",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        -512
+      ],
+      "id": "770ccd18-bb24-4f27-8e7a-5cc869392b6b",
+      "name": "Get Master User Data",
+      "notesInFlow": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "notes": "Busca dados do usuário master no banco de dados."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "dc43a97d-9538-4bbe-8ffa-ec40bedb8d99",
+              "leftValue": "={{ $json._id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        640,
+        -416
+      ],
+      "id": "a0361c32-4dc6-4d78-9d0e-3f06b2d66df9",
+      "name": "Check User Data",
+      "notesInFlow": true,
+      "notes": "Verifica se houve retorno de dados."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "eff143cd-5a38-4ddb-bb64-6ab9b540e733",
+              "name": "code",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "65bee591-77fb-4eab-ae8e-e402c5e380ce",
+              "name": "description",
+              "value": "Usuário Solicitante Encontrado.",
+              "type": "string"
+            },
+            {
+              "id": "483e4442-308b-453e-9719-6cbffb63f669",
+              "name": "user.type",
+              "value": "={{ $json.type }}",
+              "type": "string"
+            },
+            {
+              "id": "70dbf1c8-d431-423c-b117-9e1a34632b37",
+              "name": "user.name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "ccf610f0-a3cf-453d-a74e-df2d9a026256",
+              "name": "user.email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "62837214-3bd5-4efd-8239-49b957b3fe81",
+              "name": "user.phone",
+              "value": "={{ $json.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "254b1ed3-765b-4ee5-af9f-0e1c3dab7d91",
+              "name": "user.status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "666df35c-6b98-4089-84ca-c32c8c34b38c",
+              "name": "user.scopes",
+              "value": "={{ $json.scopes }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        864,
+        -512
+      ],
+      "id": "a31ee01e-b78d-4609-b96a-df4e9157dd7f",
+      "name": "User Data",
+      "notesInFlow": true,
+      "notes": "Monta a mensagem de retorno ao consumidor."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        192,
+        -176
+      ],
+      "id": "4a29a74a-df52-49fa-a32a-0830a8db62db",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        640,
+        -224
+      ],
+      "id": "f57e884b-cf0b-4994-b015-f52817e36305",
+      "name": "Respond to Webhook - ERROR - 302",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Verify Master User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Internal User": {
+      "main": [
+        [
+          {
+            "node": "Check User Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - ERROR - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify Master User",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Master User": {
+      "main": [
+        [
+          {
+            "node": "Get Master User Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Find Internal User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Master User Data": {
+      "main": [
+        []
+      ]
+    },
+    "Check User Data": {
+      "main": [
+        [
+          {
+            "node": "User Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "fb616407-41c5-4945-8b6a-39a6b6c4f66a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "aehBIgSQOIBZ1WRd",
+  "tags": [
+    {
+      "updatedAt": "2026-08-14T13:47:41.111Z",
+      "createdAt": "2026-08-14T13:47:41.111Z",
+      "id": "J8nPupqmkTedb6NH",
+      "name": "BOLT_SCOPE"
+    },
+    {
+      "updatedAt": "2026-08-14T13:46:57.867Z",
+      "createdAt": "2026-08-14T13:46:57.867Z",
+      "id": "UTtctwVTJquJ9BBf",
+      "name": "TESTE"
+    }
+  ]
+}

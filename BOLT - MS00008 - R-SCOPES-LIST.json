@@ -1,0 +1,176 @@
+{
+  "name": "BOLT - MS00008 - R-SCOPES-LIST",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "scopes/rScopesList",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -144,
+        368
+      ],
+      "id": "59a6af7e-6a7e-4eb8-938a-4411d818186e",
+      "name": "Webhook",
+      "webhookId": "150c427b-aa5a-4811-8b1e-356d3723ef49",
+      "notesInFlow": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Recebe solicitações para retornar lista de scopes. Não precisa receber parâmetros, pois o serviço retorna toda a lista."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        304,
+        176
+      ],
+      "id": "d017b4cb-5298-402a-964d-23eaa74a9d57",
+      "name": "Respond to Webhook",
+      "notesInFlow": true,
+      "notes": "Devolve ao consumidor o retorno de sucesso."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        80,
+        464
+      ],
+      "id": "fc7ae239-1ca2-4710-94df-20605414f654",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "collection": "scopes",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        272
+      ],
+      "id": "d16ab571-7487-4056-9773-0867888a0175",
+      "name": "Get All Scopes",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "notesInFlow": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Busca todos os Scopes (permissões) cadastrados na base."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        304,
+        368
+      ],
+      "id": "407ac4bb-96e8-4ea6-b653-91815dc70944",
+      "name": "Respond to Webhook - ERROR - 302",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get All Scopes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Scopes": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - ERROR - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "feef6bb5-39ff-4a2f-a843-8874505d3826",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "FvIWfxmpUto2bgV1",
+  "tags": [
+    {
+      "updatedAt": "2026-08-14T13:47:41.111Z",
+      "createdAt": "2026-08-14T13:47:41.111Z",
+      "id": "J8nPupqmkTedb6NH",
+      "name": "BOLT_SCOPE"
+    },
+    {
+      "updatedAt": "2026-08-14T13:46:57.867Z",
+      "createdAt": "2026-08-14T13:46:57.867Z",
+      "id": "UTtctwVTJquJ9BBf",
+      "name": "TESTE"
+    }
+  ]
+}

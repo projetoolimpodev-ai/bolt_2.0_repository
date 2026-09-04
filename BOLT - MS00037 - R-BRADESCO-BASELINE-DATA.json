@@ -1,0 +1,187 @@
+{
+  "name": "BOLT - MS00037 - R-BRADESCO-BASELINE-DATA",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "03917481-74f4-4931-b0de-956f7b63579d",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const lines = $input.item.json.lines;\nlet model = 0;\n\nif (lines.includes('Bradesco Celular')) {\n  model = 1;\n}\nif (lines.includes('Bradesco Internet Banking')) {\n  model = 2;\n}\n\nreturn { model, lines };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "3489c4af-6fe9-476b-8566-ec982b785ab4",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.model }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "e088e05b-780b-4042-b0c2-a89b9a09a18e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "MODEL ONE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a3e92f7f-39cf-42bf-be6b-398f553992b5",
+                    "leftValue": "={{ $json.model }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "MODEL TWO"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        -16
+      ],
+      "id": "6653a3c2-03d6-4843-bd20-629e07901ba3",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const bank = \"BRADESCO\";\nconst linhas = $input.item.json.lines;\n\n// ============================================================\n// CLIENTE\n// ============================================================\n\nconst clientMatch = linhas[2].match(/Nome:\\s*([^\\r\\n]+)/i);\n\nconst clientName = clientMatch\n  ? clientMatch[1].trim()\n  : null;\n\n// ============================================================\n// FUNÇÕES AUXILIARES\n// ============================================================\n\n// Converte \"3.806,44\" para 3806.44\nfunction parseValor(valor) {\n  return Number(\n    valor\n      .replace(/\\./g, \"\")\n      .replace(\",\", \".\")\n  );\n}\n\n// Formata o valor novamente para pt-BR\nfunction formatarValor(valor) {\n  return valor.toLocaleString(\"pt-BR\", {\n    minimumFractionDigits: 2,\n    maximumFractionDigits: 2\n  });\n}\n\n// ============================================================\n// IDENTIFICA TIPO PELA DESCRIÇÃO\n// ============================================================\n\nfunction identificarTipoPorDescricao(descricao) {\n\n  const texto = descricao.toUpperCase();\n\n  // Operações que normalmente representam ENTRADA\n  const entradas = [\n    \"RENDIMENTOS\",\n    \"TRANSFERENCIA PIX REM:\",\n    \"PIX RECEBIDO\",\n    \"DEPOSITO\",\n    \"RECEBIMENTO\",\n    \"CREDITO\"\n  ];\n\n  // Operações que normalmente representam SAÍDA\n  const saidas = [\n    \"TRANSFERENCIA PIX DES:\",\n    \"PAGTO ELETRON COBRANCA\",\n    \"PACOTE DE SERVICOS\",\n    \"TAR 2 VIA CARTAO\",\n    \"ENCARGOS LIMITE DE CRED\",\n    \"IOF S/ UTILIZACAO LIMITE\",\n    \"GASTOS CARTAO DE CREDITO\",\n    \"PIX QR CODE\",\n    \"DEBITO\"\n  ];\n\n  // Primeiro verifica entradas\n  if (entradas.some(item => texto.includes(item))) {\n    return \"ENTRADA\";\n  }\n\n  // Depois verifica saídas\n  if (saidas.some(item => texto.includes(item))) {\n    return \"SAIDA\";\n  }\n\n  // Não conseguiu identificar\n  return null;\n}\n\n// ============================================================\n// REGEX\n// ============================================================\n\n// Data no começo da linha\nconst dataRegex = /^(\\d{2}\\/\\d{2}\\/\\d{4})\\s*(.*)$/;\n\n// Final de uma transação:\n// DOCUMENTO VALOR SALDO\n//\n// Exemplos:\n// 0506731 1,34 335,73\n// 0000096 3.701,03 203,47\n// 5373634 0,06 10.394,99\nconst finalTransacaoRegex =\n  /(\\d{7})\\s+([\\d.]+,\\d{2})\\s+([\\d.]+,\\d{2})$/;\n\n// ============================================================\n// PROCESSAMENTO\n// ============================================================\n\nconst transacoes = [];\n\nlet dataAtual = null;\nlet linhasTransacao = [];\n\n// Saldo anterior utilizado para descobrir entrada/saída\nlet saldoAnterior = null;\n\n\n// ============================================================\n// FINALIZA TRANSAÇÃO\n// ============================================================\n\nfunction processarTransacao() {\n\n  if (!linhasTransacao.length) {\n    return;\n  }\n\n  const texto = linhasTransacao.join(\" \").trim();\n\n  const match = texto.match(finalTransacaoRegex);\n\n  if (!match) {\n    linhasTransacao = [];\n    return;\n  }\n\n  const documento = match[1];\n  const valorBruto = match[2];\n  const saldoAtualBruto = match[3];\n\n  const valor = parseValor(valorBruto);\n  const saldoAtual = parseValor(saldoAtualBruto);\n\n  // Remove documento + valor + saldo da descrição\n  const descricao = texto\n    .replace(finalTransacaoRegex, \"\")\n    .trim()\n    .replace(/\\s+/g, \" \");\n\n  // ==========================================================\n  // IGNORA LANÇAMENTOS SEM MOVIMENTAÇÃO\n  // ==========================================================\n\n  if (valor === 0) {\n    saldoAnterior = saldoAtual;\n    linhasTransacao = [];\n    return;\n  }\n\n  // ==========================================================\n  // IDENTIFICA TIPO DA TRANSAÇÃO\n  // ==========================================================\n\n  let tipoTransacao = null;\n\n  // ----------------------------------------------------------\n  // 1. PRIMEIRA TENTATIVA:\n  //    COMPARAÇÃO DO SALDO\n  // ----------------------------------------------------------\n\n  if (saldoAnterior !== null) {\n\n    if (saldoAtual > saldoAnterior) {\n      tipoTransacao = \"ENTRADA\";\n    }\n    else if (saldoAtual < saldoAnterior) {\n      tipoTransacao = \"SAIDA\";\n    }\n  }\n\n  // ----------------------------------------------------------\n  // 2. FALLBACK:\n  //    ANÁLISE DA DESCRIÇÃO\n  // ----------------------------------------------------------\n\n  if (tipoTransacao === null) {\n    tipoTransacao = identificarTipoPorDescricao(descricao);\n  }\n\n  // ==========================================================\n  // ADICIONA TRANSAÇÃO\n  // ==========================================================\n\n  transacoes.push({\n    data: dataAtual,\n    descricao,\n    documento,\n    valor: formatarValor(valor),\n    tipoTransacao\n  });\n\n  // Atualiza o saldo anterior\n  saldoAnterior = saldoAtual;\n\n  linhasTransacao = [];\n}\n\n\n// ============================================================\n// PERCORRE TODAS AS LINHAS\n// ============================================================\n\nfor (const linha of linhas) {\n\n  // ==========================================================\n  // IGNORA CABEÇALHOS E INFORMAÇÕES QUE NÃO SÃO TRANSAÇÕES\n  // ==========================================================\n\n  if (\n    linha.startsWith(\"Bradesco Celular\") ||\n    linha.startsWith(\"Data:\") ||\n    linha.startsWith(\"Nome:\") ||\n    linha.startsWith(\"Extrato de:\") ||\n    linha.startsWith(\"Folha:\") ||\n    linha.startsWith(\"Data Histórico\") ||\n    linha.startsWith(\"Total \") ||\n    linha === \"Extrato inexistente\"\n  ) {\n    continue;\n  }\n\n  // Ignora linhas de separação\n  if (!linha) {\n    continue;\n  }\n\n  // ==========================================================\n  // VERIFICA SE COMEÇA UMA NOVA DATA\n  // ==========================================================\n\n  const dataMatch = linha.match(dataRegex);\n\n  if (dataMatch) {\n\n    // Se já havia uma transação sendo construída,\n    // finaliza antes de começar a próxima\n    if (linhasTransacao.length) {\n      processarTransacao();\n    }\n\n    dataAtual = dataMatch[1];\n\n    const restante = dataMatch[2].trim();\n\n    if (restante) {\n      linhasTransacao.push(restante);\n    }\n\n    continue;\n  }\n\n  // ==========================================================\n  // LINHA NORMAL DA TRANSAÇÃO\n  // ==========================================================\n\n  linhasTransacao.push(linha);\n\n  // Se a linha contém DOCUMENTO + VALOR + SALDO,\n  // chegamos ao final da transação.\n  if (finalTransacaoRegex.test(linha)) {\n    processarTransacao();\n  }\n}\n\n// ============================================================\n// FINALIZA ÚLTIMA TRANSAÇÃO\n// ============================================================\n\nif (linhasTransacao.length) {\n  processarTransacao();\n}\n\n\n// ============================================================\n// RESULTADO\n// ============================================================\n\nconst count = transacoes.length;\n\nreturn {\n  bank,\n  clientName,\n  count,\n  transacoes\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -112
+      ],
+      "id": "f0bd2438-2f54-4b57-8ab2-284048cf76a9",
+      "name": "Script To Model One"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const bank = \"BRADESCO\";\nconst lines = $input.item.json.lines;\n\n// ============================================================\n// CLIENTE\n// ============================================================\n\nlet clientMatch;\nlet clientName;\n\nlines.forEach(l => {\n  clientMatch = l.match(/Nome:\\s*([^\\r\\n]+)/i);\n  if (clientMatch) clientName = clientMatch[1].trim();\n});\n\n\n// ============================================================\n// FUNÇÕES AUXILIARES\n// ============================================================\n\nfunction parseValor(valor) {\n  return Number(\n    valor\n      .replace(/\\./g, \"\")\n      .replace(\",\", \".\")\n  );\n}\n\nfunction formatarValor(valor) {\n  return valor.toLocaleString(\"pt-BR\", {\n    minimumFractionDigits: 2,\n    maximumFractionDigits: 2\n  });\n}\n\nfunction converterData(dataTexto) {\n\n  const match = dataTexto.match(\n    /^(\\d{2})\\/(\\d{2})\\/(\\d{2})$/\n  );\n\n  if (!match) {\n    return null;\n  }\n\n  const [, dia, mes, ano] = match;\n\n  return `${dia}/${mes}/20${ano}`;\n}\n\nfunction dataParaTimestamp(dataTexto) {\n\n  const [dia, mes, ano] = dataTexto.split(\"/\");\n\n  return new Date(\n    Number(ano),\n    Number(mes) - 1,\n    Number(dia)\n  ).getTime();\n}\n\n// ============================================================\n// IDENTIFICA TIPO PELA DESCRIÇÃO\n// ============================================================\n\nfunction identificarTipoPorDescricao(descricao) {\n\n  if (!descricao) {\n    return null;\n  }\n\n  const texto = descricao\n    .toUpperCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n\n  const entradas = [\n    \"TRANSFE PIX\",\n    \"PIX RECEBIDO\",\n    \"RENDIMENTOS\",\n    \"DEPOSITO\",\n    \"RECEBIMENTO\",\n    \"CREDITO\"\n  ];\n\n  const saidas = [\n    \"TRANSF PGT MTG\",\n    \"PAGTO\",\n    \"DEBITO\",\n    \"TARIFA\",\n    \"ENCARGO\"\n  ];\n\n  if (entradas.some(item => texto.includes(item))) {\n    return \"ENTRADA\";\n  }\n\n  if (saidas.some(item => texto.includes(item))) {\n    return \"SAIDA\";\n  }\n\n  return null;\n}\n\n// ============================================================\n// REGEX\n// ============================================================\n\n// Data isolada:\n//\n// 07/09/25\n// 08/11/25\n// 07/10/25\nconst dataIsoladaRegex =\n  /^(\\d{2})\\/(\\d{2})\\/(\\d{2})$/;\n\n\n// Data + documento + valor\n//\n// 07/12/25 0303637 5.667,23\n// 08/11/25 6228878 - 5.667,23\nconst transacaoCompletaRegex =\n  /^(\\d{2}\\/\\d{2}\\/\\d{2})\\s+(\\d{7})\\s+(-\\s*)?([\\d.]+,\\d{2})$/;\n\n\n// Documento + valor\n//\n// 0283637 5.667,23\n// 5578889 - 5.667,23\nconst transacaoSemDataRegex =\n  /^(\\d{7})\\s+(-\\s*)?([\\d.]+,\\d{2})$/;\n\n\n// ============================================================\n// CLASSIFICA AS LINHAS\n// ============================================================\n\nconst linhas = [];\n\nfor (let i = 0; i < lines.length; i++) {\n\n  const texto = lines[i];\n\n  // ----------------------------------------------------------\n  // TRANSAÇÃO COMPLETA\n  // ----------------------------------------------------------\n\n  let match = texto.match(transacaoCompletaRegex);\n\n  if (match) {\n\n    const dataTransacao = converterData(match[1]);\n\n    const documento = match[2];\n\n    const negativo = !!match[3];\n\n    const valorBruto = match[4];\n\n    linhas.push({\n      indice: i,\n      tipo: \"TRANSACAO\",\n      data: dataTransacao,\n      documento,\n      valorBruto,\n      negativo,\n      descricao: null,\n      dataExplicita: true\n    });\n\n    continue;\n  }\n\n  // ----------------------------------------------------------\n  // DATA ISOLADA\n  // ----------------------------------------------------------\n\n  match = texto.match(dataIsoladaRegex);\n\n  if (match) {\n\n    linhas.push({\n      indice: i,\n      tipo: \"DATA\",\n      data: converterData(texto)\n    });\n\n    continue;\n  }\n\n  // ----------------------------------------------------------\n  // TRANSAÇÃO SEM DATA\n  // ----------------------------------------------------------\n\n  match = texto.match(transacaoSemDataRegex);\n\n  if (match) {\n\n    linhas.push({\n      indice: i,\n      tipo: \"TRANSACAO_SEM_DATA\",\n      documento: match[1],\n      valorBruto: match[3],\n      negativo: !!match[2],\n      descricao: null,\n      dataExplicita: false\n    });\n\n    continue;\n  }\n\n  // ----------------------------------------------------------\n  // DESCRIÇÕES\n  // ----------------------------------------------------------\n\n  if (\n    /^Transfe Pix$/i.test(texto) ||\n    /^Transf Pgt Mtg$/i.test(texto)\n  ) {\n\n    linhas.push({\n      indice: i,\n      tipo: \"DESCRICAO\",\n      descricao: texto\n    });\n\n    continue;\n  }\n}\n\n// ============================================================\n// SEPARA OS ELEMENTOS\n// ============================================================\n\nconst datas = linhas.filter(\n  item => item.tipo === \"DATA\"\n);\n\nconst transacoesComData = linhas.filter(\n  item => item.tipo === \"TRANSACAO\"\n);\n\nconst transacoesSemData = linhas.filter(\n  item => item.tipo === \"TRANSACAO_SEM_DATA\"\n);\n\nconst descricoes = linhas.filter(\n  item => item.tipo === \"DESCRICAO\"\n);\n\n// ============================================================\n// PROCESSA TRANSAÇÕES QUE JÁ POSSUEM DATA\n// ============================================================\n\nconst transacoes = [];\n\nfor (const item of transacoesComData) {\n\n  const valor = parseValor(item.valorBruto);\n\n  let tipoTransacao;\n\n  if (item.negativo) {\n    tipoTransacao = \"SAIDA\";\n  }\n  else {\n    tipoTransacao = \"ENTRADA\";\n  }\n\n  transacoes.push({\n    data: item.data,\n    descricao: null,\n    documento: item.documento,\n    valor: formatarValor(valor),\n    tipoTransacao,\n    _indice: item.indice\n  });\n}\n\n// ============================================================\n// ASSOCIA TRANSAÇÕES SEM DATA\n// ============================================================\n//\n// O OCR colocou algumas transações em uma região diferente\n// da data.\n//\n// Exemplo:\n//\n// 07/09/25\n// 0283637 5.667,23\n// 5578889 - 5.667,23\n//\n// Porém também pode acontecer:\n//\n// 9385364 - 5.667,23\n// 08/11/25\n//\n// Por isso usamos a data mais próxima considerando os dois\n// lados da linha.\n//\n// ============================================================\n\nfor (const item of transacoesSemData) {\n\n  // ----------------------------------------------------------\n  // Procura a data imediatamente anterior\n  // ----------------------------------------------------------\n\n  let dataAnterior = null;\n\n  for (let i = datas.length - 1; i >= 0; i--) {\n\n    if (datas[i].indice < item.indice) {\n      dataAnterior = datas[i];\n      break;\n    }\n  }\n\n  // ----------------------------------------------------------\n  // Procura a próxima data\n  // ----------------------------------------------------------\n\n  let dataPosterior = null;\n\n  for (let i = 0; i < datas.length; i++) {\n\n    if (datas[i].indice > item.indice) {\n      dataPosterior = datas[i];\n      break;\n    }\n  }\n\n  // ----------------------------------------------------------\n  // Calcula distância\n  // ----------------------------------------------------------\n\n  let dataEscolhida = null;\n\n  if (dataAnterior && dataPosterior) {\n\n    const distanciaAnterior =\n      item.indice - dataAnterior.indice;\n\n    const distanciaPosterior =\n      dataPosterior.indice - item.indice;\n\n    // Escolhe a data mais próxima\n    if (distanciaAnterior <= distanciaPosterior) {\n      dataEscolhida = dataAnterior.data;\n    }\n    else {\n      dataEscolhida = dataPosterior.data;\n    }\n\n  }\n  else if (dataAnterior) {\n\n    dataEscolhida = dataAnterior.data;\n\n  }\n  else if (dataPosterior) {\n\n    dataEscolhida = dataPosterior.data;\n  }\n\n  // ----------------------------------------------------------\n  // Se não conseguiu encontrar data, ignora\n  // ----------------------------------------------------------\n\n  if (!dataEscolhida) {\n    continue;\n  }\n\n  const valor = parseValor(item.valorBruto);\n\n  const tipoTransacao = item.negativo\n    ? \"SAIDA\"\n    : \"ENTRADA\";\n\n  transacoes.push({\n    data: dataEscolhida,\n    descricao: null,\n    documento: item.documento,\n    valor: formatarValor(valor),\n    tipoTransacao,\n    _indice: item.indice\n  });\n}\n\n// ============================================================\n// ASSOCIA DESCRIÇÕES\n// ============================================================\n//\n// Aqui fazemos uma associação conservadora.\n// A descrição é relacionada à transação mais próxima.\n//\n// ============================================================\n\nfor (const descricaoItem of descricoes) {\n\n  let melhorTransacao = null;\n  let menorDistancia = Infinity;\n\n  for (const transacao of transacoes) {\n\n    if (transacao.descricao !== null) {\n      continue;\n    }\n\n    const distancia = Math.abs(\n      transacao._indice - descricaoItem.indice\n    );\n\n    if (distancia < menorDistancia) {\n      menorDistancia = distancia;\n      melhorTransacao = transacao;\n    }\n  }\n\n  if (melhorTransacao) {\n    melhorTransacao.descricao =\n      descricaoItem.descricao;\n  }\n}\n\n// ============================================================\n// FALLBACK DA DESCRIÇÃO\n// ============================================================\n//\n// Se alguma transação ficou sem descrição, tenta identificar\n// pelo próprio tipo.\n//\n// ============================================================\n\nfor (const transacao of transacoes) {\n\n  if (!transacao.descricao) {\n\n    if (transacao.tipoTransacao === \"ENTRADA\") {\n      transacao.descricao = \"Transfe Pix\";\n    }\n\n    if (transacao.tipoTransacao === \"SAIDA\") {\n      transacao.descricao = \"Transf Pgt Mtg\";\n    }\n  }\n}\n\n// ============================================================\n// ORDENA POR DATA\n// ============================================================\n//\n// Mais antiga -> mais recente\n//\n// ============================================================\n\ntransacoes.sort((a, b) => {\n\n  const dataA = dataParaTimestamp(a.data);\n  const dataB = dataParaTimestamp(b.data);\n\n  if (dataA !== dataB) {\n    return dataA - dataB;\n  }\n\n  // Se forem do mesmo dia, mantém a ordem original\n  return a._indice - b._indice;\n});\n\n// ============================================================\n// REMOVE CAMPOS INTERNOS\n// ============================================================\n\nfor (const transacao of transacoes) {\n  delete transacao._indice;\n}\n\n// ============================================================\n// RESULTADO\n// ============================================================\n\nconst count = transacoes.length;\n\nreturn {\n  bank,\n  clientName,\n  count,\n  transacoes\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        80
+      ],
+      "id": "ca4d72ca-525f-4ae7-9110-24a5323490c4",
+      "name": "Script To Model Two"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Script To Model One",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Script To Model Two",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "74fda77e-6554-4dc0-8e0b-4c54d38499e9",
+  "meta": {
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "RysaM692yrb0SPy0",
+  "tags": [
+    {
+      "updatedAt": "2026-08-18T13:34:56.305Z",
+      "createdAt": "2026-08-18T02:45:49.354Z",
+      "id": "0Lqd0eKMzm6iu2xx",
+      "name": "BOLT_SMART_TEXT"
+    }
+  ]
+}

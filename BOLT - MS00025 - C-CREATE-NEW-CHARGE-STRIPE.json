@@ -1,0 +1,302 @@
+{
+  "name": "BOLT - MS00025 - C-CREATE-NEW-CHARGE-STRIPE",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        -176
+      ],
+      "id": "d78845b0-9fa7-4744-87e2-1ac813466282",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const data = $input.item.json;\n\ndata.unit_amount = Math.round($json.amount * 100);\n\nreturn data;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -176
+      ],
+      "id": "e0a644da-a90a-4788-aed9-b53db5d2f9c2",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.com/v1/checkout/sessions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "mode",
+              "value": "={{ $json.mode }}"
+            },
+            {
+              "name": "success_url",
+              "value": "={{ $json.success_url }}"
+            },
+            {
+              "name": "cancel_url",
+              "value": "={{ $json.cancel_url }}"
+            },
+            {
+              "name": "customer",
+              "value": "={{ $json.customer }}"
+            },
+            {
+              "name": "line_items[0][price_data][currency]",
+              "value": "={{ $json.currency }}"
+            },
+            {
+              "name": "line_items[0][price_data][unit_amount]",
+              "value": "={{ $json.unit_amount }}"
+            },
+            {
+              "name": "line_items[0][price_data][product_data][name]",
+              "value": "={{ $json.name }}"
+            },
+            {
+              "name": "line_items[0][quantity]",
+              "value": "={{ $json.quantity }}"
+            },
+            {
+              "name": "line_items[0][price_data][product_data][description]",
+              "value": "={{ $json.description }}"
+            },
+            {
+              "name": "metadata[tenantId]",
+              "value": "={{ $json.tenantId }}"
+            },
+            {
+              "name": "metadata[tenantDocument]",
+              "value": "={{ $json.tenantDocument }}"
+            },
+            {
+              "name": "metadata[productType]",
+              "value": "={{ $json.productType }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        -176
+      ],
+      "id": "d7a30aff-0d41-455c-a5b9-28d75baf92a5",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "wpL2OR4TwgjQe8XZ",
+          "name": "Bearer Auth Stripe"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e5b3714a-a24f-41ed-83a2-ee0cf290a741",
+              "name": "_id",
+              "value": "={{ $json.metadata.tenantId }}",
+              "type": "object"
+            },
+            {
+              "id": "5b4fce68-a48a-446e-be2a-ce23e38c91fb",
+              "name": "charge.paymentURL",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "f5d4af28-12dd-4540-b32e-3d970326d705",
+              "name": "charge.checkoutSessionId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "d88e8314-8640-469c-8dc1-e82d988f3a0d",
+              "name": "charge.status",
+              "value": "={{ $json.payment_status }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        -272
+      ],
+      "id": "0f6e19ad-eb56-4931-a611-2af58de14471",
+      "name": "Set Charge Fields"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "tenants",
+        "updateKey": "_id",
+        "fields": "charge",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        -272
+      ],
+      "id": "0c31b39f-2945-413e-8cbe-d3ba26904bb7",
+      "name": "Update With Charge Data",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        -80
+      ],
+      "id": "0394884c-1402-45d8-a58e-cfc37c68babe",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        -272
+      ],
+      "id": "7d5571f3-abd2-47d1-9341-c90ee641df19",
+      "name": "Respond to Webhook - 302",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Set Charge Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Charge Fields": {
+      "main": [
+        [
+          {
+            "node": "Update With Charge Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update With Charge Data": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Respond to Webhook - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3495fd3e-fffa-4841-93e3-2c1c9b51b621",
+  "meta": {
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "VCYsAEWQrpBSwLdS",
+  "tags": [
+    {
+      "updatedAt": "2026-08-17T19:54:38.127Z",
+      "createdAt": "2026-08-17T19:54:38.127Z",
+      "id": "D61K5Uh4H0apg9JL",
+      "name": "BOLT_CHARGE"
+    }
+  ]
+}

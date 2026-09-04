@@ -1,0 +1,261 @@
+{
+  "name": "BOLT - MS00033 - R-CEF-BASELINE-DATA",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        -256
+      ],
+      "id": "fdcbb73f-6734-4187-866a-eb2780b616e5",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const lines = $input.item.json.lines || $input.item.json.pages;\nlet model = 0;\n\nif ($input.item.json.type === \"text\" && lines[0] === \"Extrato por período\") {\n  model = 1;\n} else\nif ($input.item.json.type === \"text\" && lines[0] !== \"Extrato por período\") {\n  model = 2;\n} else\nif ($input.item.json.type === \"ocr\") {\n  model = 3;\n}\n\nreturn { model, lines };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -256
+      ],
+      "id": "e555372a-6519-488b-bd87-b1a38fd1cffb",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.model }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "6cc49924-f5d9-44e2-8020-f4c3421d3d03"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "MODEL ONE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "88780214-65bc-435f-a96b-7e9286b8383d",
+                    "leftValue": "={{ $json.model }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "MODEL TWO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d567530a-4889-4f07-bf83-593b0169fe29",
+                    "leftValue": "={{ $json.model }}",
+                    "rightValue": 3,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "MODEL OCR"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        -272
+      ],
+      "id": "c5f67992-e5e0-4fbf-ab02-52d2d851cc88",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const bank = \"CAIXA ECONOMICA FEDERAL\";\nconst linhas = $input.item.json.lines;\n\nconst ignorarDescricoes = new Set([\n  \"SALDO DIA\",\n  \"CORRECAO MONETARIA\",\n  \"CREDITO JUROS\"\n]);\n\n// ==================================================\n// CLIENTE\n// ==================================================\n\nconst clientName = linhas[0];\n\n\n// ==================================================\n// REGEX\n// ==================================================\n\nconst regexData =\n  /^\\d{2}\\/\\d{2}\\/\\d{4}$/;\n\nconst regexDataEfetiva =\n  /^\\d{2}\\/\\d{2}\\s+\\d{2}:\\d{2}$/;\n\nconst regexDocumento =\n  /^\\d+$/;\n\n\n// Procura o VALOR + SALDO em qualquer lugar da linha.\n//\n// Exemplos:\n//\n// R$ 50,00 R$ 59,31 C\n// - R$ 50,00 R$ 9,31 C\n// 311026 DEPOSITO DINH LOTERICO R$ 50,00 R$ 59,31 C\n//\nconst regexValorSaldo =\n  /(-\\s*)?R\\$\\s*([\\d.]+,\\d{2})\\s+R\\$\\s*([\\d.]+,\\d{2})\\s+([CD])/;\n\n\n// ==================================================\n// EXTRAIR VALOR\n// ==================================================\n\nfunction extrairValor(linha) {\n\n  const match = linha.match(regexValorSaldo);\n\n  if (!match) {\n    return null;\n  }\n\n  const [\n    trecho,\n    sinal,\n    valor,\n    saldo,\n    tipoSaldo\n  ] = match;\n\n  return {\n    trecho,\n    valor,\n    saldo,\n    tipoSaldo,\n    tipoTransacao: sinal\n      ? \"SAIDA\"\n      : \"ENTRADA\"\n  };\n}\n\n\n// ==================================================\n// TRANSAÇÕES\n// ==================================================\n\nconst transacoes = [];\n\nlet i = 0;\n\n\nwhile (i < linhas.length) {\n\n  const linha = linhas[i];\n\n\n  // =================================================\n  // IGNORAR LINHAS QUE NÃO SÃO DATA\n  // =================================================\n\n  if (!regexData.test(linha)) {\n    i++;\n    continue;\n  }\n\n\n  const dataTransacao = linha;\n\n\n  // =================================================\n  // SALDO DIA\n  //\n  // Exemplo:\n  //\n  // 02/02/2026 SALDO DIA R$ 49,31 C\n  // =================================================\n\n  if (\n    i + 1 < linhas.length &&\n    linhas[i + 1] === \"SALDO DIA\"\n  ) {\n\n    i += 2;\n    continue;\n  }\n\n\n  // =================================================\n  // DATA EFETIVA\n  // =================================================\n\n  let pos = i + 1;\n\n  if (\n    pos >= linhas.length ||\n    !regexDataEfetiva.test(linhas[pos])\n  ) {\n    i++;\n    continue;\n  }\n\n  pos++;\n\n\n  // =================================================\n  // DOCUMENTO / DESCRIÇÃO\n  // =================================================\n\n  let documento = null;\n  let descricaoLinhas = [];\n\n\n  // =================================================\n  // CASO 1\n  //\n  // Documento sozinho:\n  //\n  // 311906\n  // DEB PIX CHAVE\n  // BRUNO MOREIRA...\n  // E003...\n  // - R$ 50,00 R$ 9,31 C\n  // =================================================\n\n  if (\n    pos < linhas.length &&\n    regexDocumento.test(linhas[pos])\n  ) {\n\n    documento = linhas[pos];\n\n    pos++;\n\n    // Tudo até encontrar o valor será descrição\n    while (pos < linhas.length) {\n\n      const linhaDescricao = linhas[pos];\n\n      const valorEncontrado =\n        extrairValor(linhaDescricao);\n\n      if (valorEncontrado) {\n        break;\n      }\n\n      // Se encontrou outra data, interrompe\n      if (regexData.test(linhaDescricao)) {\n        break;\n      }\n\n      descricaoLinhas.push(linhaDescricao);\n\n      pos++;\n    }\n\n  }\n\n  // =================================================\n  // CASO 2\n  //\n  // Documento + descrição + valor na mesma linha:\n  //\n  // 311026 DEPOSITO DINH LOTERICO R$ 50,00 R$ 59,31 C\n  // =================================================\n\n  else {\n\n    if (pos >= linhas.length) {\n      i++;\n      continue;\n    }\n\n    const linhaTransacao = linhas[pos];\n\n    const valorEncontrado =\n      extrairValor(linhaTransacao);\n\n    if (!valorEncontrado) {\n      i++;\n      continue;\n    }\n\n\n    // Pega tudo que está antes do primeiro R$\n    const indiceValor =\n      linhaTransacao.search(/-?\\s*R\\$/);\n\n    if (indiceValor === -1) {\n      i++;\n      continue;\n    }\n\n    const parteInicial =\n      linhaTransacao\n        .substring(0, indiceValor)\n        .trim();\n\n\n    // Documento + descrição\n    const match =\n      parteInicial.match(/^(\\d+)\\s+(.+)$/);\n\n    if (!match) {\n      i++;\n      continue;\n    }\n\n    documento = match[1];\n\n    descricaoLinhas.push(match[2]);\n\n\n    // =================================================\n    // CRIAR TRANSAÇÃO\n    // =================================================\n\n    const descricao =\n      descricaoLinhas\n        .join(\" \")\n        .trim();\n\n    if (\n      !ignorarDescricoes.has(\n        descricao.toUpperCase()\n      )\n    ) {\n\n      transacoes.push({\n        data: dataTransacao,\n        documento,\n        descricao,\n        valor: valorEncontrado.valor,\n        tipoTransacao: valorEncontrado.tipoTransacao\n      });\n    }\n\n\n    // Já processamos a linha inteira\n    i = pos + 1;\n\n    continue;\n  }\n\n\n  // =================================================\n  // CASO DOCUMENTO SEPARADO\n  // =================================================\n\n  if (\n    pos >= linhas.length\n  ) {\n    i++;\n    continue;\n  }\n\n\n  const linhaValor = linhas[pos];\n\n  const valorEncontrado =\n    extrairValor(linhaValor);\n\n\n  if (!valorEncontrado) {\n    i++;\n    continue;\n  }\n\n\n  const descricao =\n    descricaoLinhas\n      .join(\" \")\n      .trim();\n\n\n  // =================================================\n  // IGNORAR DESCRIÇÕES\n  // =================================================\n\n  if (\n    !ignorarDescricoes.has(\n      descricao.toUpperCase()\n    )\n  ) {\n\n    transacoes.push({\n      data: dataTransacao,\n      documento,\n      descricao,\n      valor: valorEncontrado.valor,\n      tipoTransacao: valorEncontrado.tipoTransacao\n    });\n\n  }\n\n\n  // =================================================\n  // CONTINUAR\n  // =================================================\n\n  i = pos + 1;\n}\n\n\n// ==================================================\n// RESULTADO\n// ==================================================\n\nreturn {\n  bank,\n  clientName,\n  count: transacoes.length,\n  transacoes\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -256
+      ],
+      "id": "bce1be53-a793-44bd-928a-f897a27e7a25",
+      "name": "Script Model Two"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const bank = \"CAIXA ECONOMICA FEDERAL\";\nconst linhas = $input.item.json.lines;\nconst regex = /^(\\d{2}\\/\\d{2}\\/\\d{4})\\s+(\\d+)\\s+(.+?)\\s+([\\d.,]+)\\s+([CD])\\s+[\\d.,]+\\s+[CD]$/;\nconst ignorarDescricoes = new Set([\n    \"SALDO DIA\", \"CORRECAO MONETARIA\", \"CREDITO JUROS\"\n]);\n\n// Pegar Nome do Cliente\nlet clientName = linhas[3];\n\n// Pegar as Transações\nconst transacoes = linhas.map(linha => {\n  \n  const match = linha.match(regex);\n  \n  if (!match) return null;\n  \n  const [, data, documento, descricao, valor, tipoTransacao] = match;\n\n  if (ignorarDescricoes.has(descricao.toUpperCase())) {\n    return null;\n  }\n  \n  return {\n    data,\n    documento,\n    descricao,\n    valor,\n    tipoTransacao: tipoTransacao === 'C' ? 'ENTRADA' : 'SAIDA'\n  };\n\n}).filter(Boolean);\n\nlet count = transacoes.length;\n\nreturn { bank, clientName, count, transacoes };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -448
+      ],
+      "id": "f2ae429d-b9d9-4447-9422-1268019bfc72",
+      "name": "Script Model One"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const data = $input.item.json.lines;\nlet table = [];\n\nconst lines = data[0].markdown.split(/\\r?\\n/).map(linha => linha.trim()).filter(linha => linha !== \"\");\n\nconst clientMatch = lines[3].match(\n  /Cliente\\s*([^\\r\\n]+)/i\n);\n\nconst clientName = clientMatch\n  ? clientMatch[1].trim()\n  : null;\n\ndata.forEach(d => {\n  d.tables.forEach(dt => {\n    table.push(dt.content);\n  });\n});\n\nreturn { clientName, table };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -64
+      ],
+      "id": "5c389b65-cf2b-4062-a180-6b6a7405e7d9",
+      "name": "Script Normalize Table"
+    },
+    {
+      "parameters": {
+        "jsCode": "const bank = \"CAIXA ECONOMICA FEDERAL\";\nlet clientName = $input.first().json.clientName;\n\nconst result = [];\n\n// Função para limpar HTML\nfunction stripHtml(html) {\n  return html\n    .replace(/<[^>]+>/g, '')\n    .replace(/&nbsp;/g, ' ')\n    .trim();\n}\n\n// Extrai o primeiro lançamento monetário encontrado\n// Ex:\n// \"60,00 C\" -> { value: 60, type: \"ENTRADA\" }\n// \"272,58 D 15.134,27 C\" -> { value: 272.58, type: \"SAIDA\" }\nfunction parseTransactionValue(text) {\n  const match = text.match(\n    /(\\d{1,3}(?:\\.\\d{3})*,\\d{2})\\s*([CD])/\n  );\n\n  if (!match) {\n    return {\n      value: null,\n      type: null\n    };\n  }\n\n  const value = Number(\n    match[1]\n      .replace(/\\./g, '')\n      .replace(',', '.')\n  );\n\n  return {\n    value,\n    type: match[2] === 'C' ? 'Entrada' : 'Saída'\n  };\n}\n\n// Tabelas retornadas pela Mistral\nconst tables = $input.first().json.table || [];\n\nfor (const table of tables) {\n\n  const rows = table.match(/<tr[\\s\\S]*?<\\/tr>/gi) || [];\n\n  for (const row of rows) {\n\n    const cells = [...row.matchAll(/<td[^>]*>([\\s\\S]*?)<\\/td>/gi)]\n      .map(match => stripHtml(match[1]));\n\n    if (cells.length < 5) {\n      continue;\n    }\n\n    const dataHora = cells[0];\n    const historico = cells[2] || '';\n    const favorecido = cells[3] || '';\n\n    // Ignorar linhas que não são lançamentos\n    if (\n      !/\\d{2}\\/\\d{2}\\/\\d{4}/.test(dataHora) ||\n      historico === 'SALDO DIA' ||\n      historico === 'SALDO ANTERIOR' ||\n      historico === 'CORRECAO MONETARIA' ||\n      historico === 'CREDITO JUROS'\n    ) {\n      continue;\n    }\n\n    // Procura a primeira célula que contenha um valor monetário\n    const valorTexto = cells.find(cell =>\n      /(\\d{1,3}(?:\\.\\d{3})*,\\d{2})\\s*[CD]/.test(cell)\n    );\n\n    if (!valorTexto) {\n      continue;\n    }\n\n    const transaction = parseTransactionValue(valorTexto);\n\n    result.push({\n      data: dataHora.replace(' - ', ' '),\n      documento: \"\",\n      descricao: `${historico}${favorecido ? ' ' + favorecido : ''}`.trim(),\n      valor: transaction.value,\n      tipoTransacao: transaction.type\n    });\n  }\n}\n\nreturn {\n  bank,\n  clientName,\n  count: result.length,\n  transacoes: result\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -64
+      ],
+      "id": "5f44983f-86a7-4b64-b5e9-0388a89e60c2",
+      "name": "Script Model Three"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Script Model One",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Script Model Two",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Script Normalize Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script Model Two": {
+      "main": [
+        []
+      ]
+    },
+    "Script Normalize Table": {
+      "main": [
+        [
+          {
+            "node": "Script Model Three",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1388e63e-c421-4f5f-928e-b6c9a38c7a9a",
+  "meta": {
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "yiRQ4hPM9cADpRk6",
+  "tags": [
+    {
+      "updatedAt": "2026-08-18T13:34:56.305Z",
+      "createdAt": "2026-08-18T02:45:49.354Z",
+      "id": "0Lqd0eKMzm6iu2xx",
+      "name": "BOLT_SMART_TEXT"
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "name": "BOLT - MS00042 - C-AUDIT",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "762536c2-c8ec-4254-871d-9df8b8c2c5a8",
+      "name": "When Executed by Another Workflow",
+      "notesInFlow": true,
+      "notes": "Serviço recebe dados de auditoria para gravar o log na base."
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "audit",
+        "fields": "service, requester, status, code, description, messages, date, request, response",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "739f6e3b-f4d1-44cf-bdfb-f7052377f0a2",
+      "name": "Create Audit",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "notesInFlow": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "notes": "Grava dados de auditoria na base de dados."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Create Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Audit": {
+      "main": [
+        [],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "eaf1c803-7a87-4de7-adb0-07ebe715d149",
+  "meta": {
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "zMipPWhaIr3IIH0c",
+  "tags": [
+    {
+      "updatedAt": "2026-07-30T13:33:19.428Z",
+      "createdAt": "2026-07-30T13:33:19.428Z",
+      "id": "3jSqwXSw48cPrg9A",
+      "name": "BOLT_AUDIT"
+    }
+  ]
+}

@@ -1,0 +1,388 @@
+{
+  "name": "BOLT - MS00020 - C-TENANT",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tenants/cTenant",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -368
+      ],
+      "id": "c7854e51-f4cc-4408-9d81-407dd3a8f77b",
+      "name": "Webhook",
+      "webhookId": "0335b3ec-87f4-4f48-9a88-770b3511ea49",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        -656
+      ],
+      "id": "20463540-fc09-44d6-b1f0-cfe2e3ae97ab",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8a65370b-e1e3-4e6c-b2cb-ff85f009a8e2",
+              "name": "identification",
+              "value": "={{ $('Webhook').item.json.body.identification }}",
+              "type": "object"
+            },
+            {
+              "id": "963e93a7-1c0e-42e3-8807-8b610d60d1c5",
+              "name": "address",
+              "value": "={{ $('Webhook').item.json.body.address }}",
+              "type": "object"
+            },
+            {
+              "id": "b62fe8c6-a28a-45f1-8b51-27d264d63f08",
+              "name": "contacts",
+              "value": "={{ $('Webhook').item.json.body.contacts }}",
+              "type": "array"
+            },
+            {
+              "id": "80d4be12-0c07-4dc9-9bf0-a9fba38f4be2",
+              "name": "status",
+              "value": "waiting",
+              "type": "string"
+            },
+            {
+              "id": "d98134ac-3bdd-4c38-950a-5aaa44454326",
+              "name": "requester",
+              "value": "={{ $('Webhook').item.json.body.requester }}",
+              "type": "string"
+            },
+            {
+              "id": "3b8f9e37-1ac2-4ae3-ad14-7bcced084172",
+              "name": "createdAt",
+              "value": "={{ $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        -560
+      ],
+      "id": "2f0139ae-f552-4661-b660-ad4afac227ee",
+      "name": "Set Tenant Data"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "tenants",
+        "fields": "identification, address, contacts, status, requester, createdAt",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        -560
+      ],
+      "id": "db702f7e-124b-4299-911e-12316d254d10",
+      "name": "Insert Tenants",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fb66a132-913a-431f-b40c-20fdba9211f3",
+              "name": "code",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "61724b15-0a14-4d53-8704-b0ea2b4aaf43",
+              "name": "description",
+              "value": "=Empresa \"{{ $('Set Tenant Data').item.json.identification.tradeName }}\" criada com sucesso.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        -656
+      ],
+      "id": "b1909af9-6789-4c31-8eed-8f6d84415eac",
+      "name": "Set Success Message"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "aehBIgSQOIBZ1WRd",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/aehBIgSQOIBZ1WRd",
+          "cachedResultName": "BOLT - r-internal-user-profile"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        -464
+      ],
+      "id": "66e3a244-0192-4a13-942f-b4832dc4e5a3",
+      "name": "r-internal-user-profile"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d65e35f8-0954-45c4-96a6-999b3e6cceda",
+              "leftValue": "={{ $json.code }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "f2ce1542-c9f7-4112-8281-9a1c92d0d0ee",
+              "leftValue": "={{ $json.user.scopes }}",
+              "rightValue": "tenants.lead",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        -464
+      ],
+      "id": "438cac90-2652-4cc6-82be-7fa73a270a2c",
+      "name": "Verifica Validade do Solicitante"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        -272
+      ],
+      "id": "a376bc76-fdfe-4147-acfa-a84eb4c40392",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"code\": 302,\n  \"description\":\"O usuário não existe, não está ativo ou não tem permissão para executar a ação desejada.\"\n}",
+        "options": {
+          "responseCode": 302
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        -368
+      ],
+      "id": "dc049144-a948-4a4a-b707-1ef24d01b525",
+      "name": "Respond to Webhook - FUNC ERROR - 302"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 303,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        -464
+      ],
+      "id": "dcff2df1-cf09-437f-99e1-0c3d4ba93cf4",
+      "name": "Respond to Webhook - 303",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "r-internal-user-profile",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Tenant Data": {
+      "main": [
+        [
+          {
+            "node": "Insert Tenants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Tenants": {
+      "main": [
+        [
+          {
+            "node": "Set Success Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 303",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Success Message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "r-internal-user-profile": {
+      "main": [
+        [
+          {
+            "node": "Verifica Validade do Solicitante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica Validade do Solicitante": {
+      "main": [
+        [
+          {
+            "node": "Set Tenant Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - FUNC ERROR - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c3cdc606-1e88-4151-8e2d-895e96c76905",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "MQzJ0FchuUWN3kY6",
+  "tags": [
+    {
+      "updatedAt": "2026-08-17T18:13:02.598Z",
+      "createdAt": "2026-08-17T18:13:02.598Z",
+      "id": "4H4rTRjTkwdYyvUx",
+      "name": "BOLT_TENANTS"
+    }
+  ]
+}

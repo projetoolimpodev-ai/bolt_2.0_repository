@@ -1,0 +1,405 @@
+{
+  "name": "BOLT - MS00030 - D-TENANT",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "DELETE",
+        "path": "tenants/dTenant",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        144
+      ],
+      "id": "283c7cdd-14e5-4a3b-956a-928b57fb6429",
+      "name": "Webhook",
+      "webhookId": "50ef8964-79e0-4a57-9713-a24a05b5bb41",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        192
+      ],
+      "id": "facfeb25-10ca-43ca-bfd5-d6bd36b89f29",
+      "name": "Respond to Webhook - API ERROR - 301"
+    },
+    {
+      "parameters": {
+        "collection": "users",
+        "options": {},
+        "query": "={\n\"tenantId\":\"{{ $json._id }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        -192
+      ],
+      "id": "dca4627d-ffd6-4dff-a08b-b3587d8428d9",
+      "name": "Find Users",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        672,
+        -336
+      ],
+      "id": "10ed8e28-3ec4-48d1-aa84-36f8441f75cd",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        -96
+      ],
+      "id": "4d84b2bf-5ec2-492c-b6cc-768a09084109",
+      "name": "Respond to Webhook - API ERROR - 303"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "collection": "tenants",
+        "query": "={\n  \"identification.registeredCompanyName\":\"{{ $('Find Tenant').item.json.identification.registeredCompanyName }}\",\n  \"identification.cnpj\":\"{{ $('Find Tenant').item.json.identification.cnpj }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        -384
+      ],
+      "id": "74f44b0f-f544-427e-a739-7d45b80e3e50",
+      "name": "Delete Tenant",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        -288
+      ],
+      "id": "572acc07-a0bf-4c70-bb9f-d0f619a28a6c",
+      "name": "Respond to Webhook - API ERROR - 304"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1344,
+        -480
+      ],
+      "id": "0e139c2b-8f05-4db4-b1b9-36f0535aab89",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "collection": "tenants",
+        "options": {},
+        "query": "={\n  \"_id\":\"{{ $json.query._id }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "f4a00576-305f-4d66-9ca8-645835085a29",
+      "name": "Find Tenant",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "8c6194c0-b37d-4a2f-9bcb-e82cccab0c2c",
+      "name": "Respond to Webhook - API ERROR - "
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        -144
+      ],
+      "id": "ecd5f42a-6fa2-4441-9db5-b65f1451d18e",
+      "name": "Respond to Webhook - API ERROR - 305"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "collection": "users",
+        "query": "={\n  \"email\":\"{{ $json.email }}\",\n  \"phone\":\"{{ $json.phone }}\",\n  \"tenantId\":\"{{ $json.tenantId }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        -96
+      ],
+      "id": "b62776a8-718a-441f-9ad0-28373f0a2845",
+      "name": "Delete Users",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b30115a4-efca-42ab-89d4-ae751bdf35d1",
+              "name": "code",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "f4964e3a-56f1-4f1e-9f7f-9d14f390b874",
+              "name": "description",
+              "value": "Tenant excluída com sucesso.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        -480
+      ],
+      "id": "153bdc98-2dca-489f-b634-af723596052c",
+      "name": "Set Success"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Find Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - API ERROR - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Users": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - API ERROR - 305",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Delete Tenant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Tenant": {
+      "main": [
+        [
+          {
+            "node": "Set Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - API ERROR - 304",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Tenant": {
+      "main": [
+        [
+          {
+            "node": "Find Users",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - API ERROR - ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Users": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - API ERROR - 303",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Success": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "33936831-baa3-4862-a577-52b2aa257090",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "cXxhCmzyNy7eqgl9",
+  "tags": [
+    {
+      "updatedAt": "2026-08-17T18:13:02.598Z",
+      "createdAt": "2026-08-17T18:13:02.598Z",
+      "id": "4H4rTRjTkwdYyvUx",
+      "name": "BOLT_TENANTS"
+    }
+  ]
+}

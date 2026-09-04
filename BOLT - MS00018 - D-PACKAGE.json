@@ -1,0 +1,244 @@
+{
+  "name": "BOLT - MS00018 - D-PACKAGE",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "DELETE",
+        "path": "catalog/dPackage",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -208,
+        192
+      ],
+      "id": "36e9c50f-5e98-4065-abcd-b3ef960c7618",
+      "name": "Webhook",
+      "webhookId": "ce9f759b-603d-4466-a868-078bf3af924c",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5201a2a8-b86d-4bab-bfee-f76eaf61b79c",
+              "name": "_id",
+              "value": "={{ $json.body._id }}",
+              "type": "string"
+            },
+            {
+              "id": "0a185871-6b42-4335-a5cb-cc72ccb4fae4",
+              "name": "mnemonic",
+              "value": "={{ $json.body.mnemonic }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        96
+      ],
+      "id": "010d87ac-7fa8-443b-a3f6-d907d4ee2508",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        688,
+        0
+      ],
+      "id": "60e4302d-caad-4adf-a0cb-73b39867c04f",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "collection": "packages",
+        "query": "={\n  \"mnemonic\":\"{{ $json.mnemonic }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        96
+      ],
+      "id": "290a942a-68bd-47ee-b972-3c7bf5f29033",
+      "name": "Delete documents",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85e81cab-0edb-46f2-ae2d-5cc1bd38acf1",
+              "name": "code",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "bfcf2040-e685-4a68-bae0-1e27d272463e",
+              "name": "description",
+              "value": "Plano Excluído com Sucesso.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        0
+      ],
+      "id": "d394dc7d-27ba-467d-89fa-eef29e941e6a",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        16,
+        288
+      ],
+      "id": "92bb5ea8-04a4-4db0-ab92-03bf35ffa464",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        464,
+        192
+      ],
+      "id": "c32b69a0-5ecf-4c7a-a7f4-6d90e1cfbbac",
+      "name": "Respond to Webhook - ERROR - 302",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Delete documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete documents": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - ERROR - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2a395e13-268e-4c17-b9cc-e9b79e622b16",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "15Rd7ynNOJQUFFo8",
+  "tags": [
+    {
+      "updatedAt": "2026-08-16T05:50:15.534Z",
+      "createdAt": "2026-08-16T05:50:15.534Z",
+      "id": "DeJaE0Hgu67Bnh9Y",
+      "name": "BOLT_CATALOG"
+    }
+  ]
+}

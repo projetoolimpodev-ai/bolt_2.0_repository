@@ -1,0 +1,65 @@
+{
+  "name": "BOLT - MS00035 - R-MP-BASELINE-DATA",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        -64
+      ],
+      "id": "2b78a885-ae45-4d65-98b9-675c3a7d27ca",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const bank = \"MERCADO PAGO\";\nconst linhas = $input.item.json.lines;\nconst transactions = [];\n\nlet current = null;\nconst reDate = /^\\d{2}-\\d{2}-\\d{4}$/;\nconst reEnd = /^\\d+\\s+R\\$\\s*-?[\\d.]+,\\d{2}\\s+R\\$\\s*-?[\\d.]+,\\d{2}$/;\n\n// Pegar Nome do Cliente\nlet clientName = linhas[2];\n\nfor (const line of linhas) {\n\n  // ignora cabeçalhos\n  if (\n    line === \"DETALHE DOS MOVIMENTOS\" ||\n    line.startsWith(\"Data Descrição\") ||\n    /^Saldo final:/.test(line) ||\n    /^Saldo inicial:/.test(line) ||\n    /^Entradas:/.test(line) ||\n    /^Saidas:/.test(line) ||\n    /^Data de geração:/.test(line) ||\n    /^Você tem alguma dúvida/.test(line) ||\n    /^Mercado Pago Instituição/.test(line) ||\n    /^Encontre nossos canais/.test(line) ||\n    /^\\d+\\/\\d+$/.test(line)\n  ) {\n    continue;\n  }\n\n  // início de uma movimentação\n  if (reDate.test(line)) {\n\n    if (current) {\n      transactions.push(current);\n    }\n\n    current = {\n      lines: [line]\n    };\n\n    continue;\n  }\n\n  if (!current) continue;\n\n  current.lines.push(line);\n\n  // terminou a movimentação\n  if (reEnd.test(line)) {\n    transactions.push(current);\n    current = null;\n  }\n\n}\n\nif (current) {\n  transactions.push(current);\n}\n\n// Transforma os blocos em transações estruturadas\nconst result = transactions.map(item => {\n\n  const lines = [...item.lines];\n\n  const data = lines.shift().replace(/-/g, \"/\");\n\n  // Última linha: ID + Valor + Saldo\n  const lastLine = lines.pop();\n\n  const match = lastLine.match(/^(\\d+)\\s+R\\$\\s*(-?[\\d.]+,\\d{2})\\s+R\\$\\s*-?[\\d.]+,\\d{2}$/);\n\n  let documento = \"\";\n  let valor = \"\";\n  let tipoTransacao = \"\";\n\n  if (match) {\n\n    documento = match[1];\n\n    tipoTransacao = match[2].startsWith(\"-\")\n      ? \"SAIDA\"\n      : \"ENTRADA\";\n\n    valor = match[2]\n      .replace(\"-\", \"\")\n      .replace(/\\./g, \"\");\n\n  }\n\n  return {\n    data,\n    documento,\n    descricao: lines.join(\" \").replace(/\\s+/g, \" \").trim(),\n    valor,\n    tipoTransacao\n  };\n\n});\n\nreturn {\n  bank,\n  clientName,\n  count: result.length,\n  transacoes: result\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -64
+      ],
+      "id": "e44e0dd7-eca7-4a85-a344-6741e508e65f",
+      "name": "Script To Mercado Pago"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Script To Mercado Pago",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "62c0a760-18cf-4d5e-bc1f-b787ff3838cc",
+  "meta": {
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "pxGZtSWLY8qOJikV",
+  "tags": [
+    {
+      "updatedAt": "2026-08-18T13:34:56.305Z",
+      "createdAt": "2026-08-18T02:45:49.354Z",
+      "id": "0Lqd0eKMzm6iu2xx",
+      "name": "BOLT_SMART_TEXT"
+    }
+  ]
+}

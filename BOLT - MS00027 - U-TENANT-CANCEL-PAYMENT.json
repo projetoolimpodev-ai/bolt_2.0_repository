@@ -1,0 +1,337 @@
+{
+  "name": "BOLT - MS00027 - U-TENANT-CANCEL-PAYMENT",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "charges/uTenantCancelPayment",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        288
+      ],
+      "id": "d6fd53ba-c1a0-4c48-a139-95790ab58b85",
+      "name": "Webhook",
+      "webhookId": "7c596817-9de3-493a-ad3c-ce06cde0ac3e",
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "collection": "tenants",
+        "options": {},
+        "query": "={\n  \"charge.checkoutSessionId\":\"{{ $json.query.sessionId}}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        192
+      ],
+      "id": "75d6771f-42dc-40a5-b0ba-e6cbcc03c60b",
+      "name": "Find documents",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, GET, PATCH, PUT, DELETE, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "7f438fc3-edf0-4e7c-b943-b8ee166476a4",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d371bb3a-ab6b-4fb3-974a-8445d79f121f",
+              "name": "status",
+              "value": "cancelled",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        0
+      ],
+      "id": "8285f945-01d8-499b-9f91-51494cca1e8d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "findOneAndUpdate",
+        "collection": "tenants",
+        "updateKey": "_id",
+        "fields": "status, charge, package",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        96
+      ],
+      "id": "2010d89d-ac92-44bd-92a9-2c7c00d0badf",
+      "name": "Find and update documents",
+      "retryOnFail": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7277aa61-5ddd-43a7-b440-e71d4e2eb160",
+              "name": "_id",
+              "value": "={{ $json._id }}",
+              "type": "object"
+            },
+            {
+              "id": "c20d6d9f-dc34-4422-bf35-7dff1ef4c7d8",
+              "name": "status",
+              "value": "waiting",
+              "type": "string"
+            },
+            {
+              "id": "9f8d11b3-d3f3-4028-a076-bae4f1cfda23",
+              "name": "charge.paidAt",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "fea6f10b-c720-4911-9f80-8decc0f0dffd",
+              "name": "charge.status",
+              "value": "cancelled",
+              "type": "string"
+            },
+            {
+              "id": "68ca61fd-80b3-480a-8f93-c22cb71f0423",
+              "name": "charge.paymentURL",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "45a2c050-8053-4679-aa4d-d11fb770b234",
+              "name": "package",
+              "value": "",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        96
+      ],
+      "id": "e941fad0-ec2d-4937-9ea2-4651ff6c4823",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        384
+      ],
+      "id": "25d01948-c388-4272-9832-c972fa5592fd",
+      "name": "Respond to Webhook - 301",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 302,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        288
+      ],
+      "id": "5b738dab-c658-4603-ab49-0b05744e5821",
+      "name": "Respond to Webhook - 302",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 303,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        192
+      ],
+      "id": "d062d86b-3e30-4d7c-b628-ea77abe5eb49",
+      "name": "Respond to Webhook - 303",
+      "notesInFlow": true,
+      "notes": "Responde ao consumidor o retorno 401, para usuário não encontrado."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Find documents",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find documents": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find and update documents": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 303",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Find and update documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e3115d77-7114-4a84-a26f-bde93f26e255",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "qFyQAiKdISIqHT0E",
+  "tags": [
+    {
+      "updatedAt": "2026-08-17T19:54:38.127Z",
+      "createdAt": "2026-08-17T19:54:38.127Z",
+      "id": "D61K5Uh4H0apg9JL",
+      "name": "BOLT_CHARGE"
+    }
+  ]
+}

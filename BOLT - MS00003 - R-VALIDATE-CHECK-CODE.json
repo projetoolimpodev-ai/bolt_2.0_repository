@@ -1,0 +1,81 @@
+{
+  "name": "BOLT - MS00003 - R-VALIDATE-CHECK-CODE",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        272,
+        320
+      ],
+      "notesInFlow": true,
+      "notes": "Recebe solicitações para verificação de e-mail e código de confirmação."
+    },
+    {
+      "parameters": {
+        "collection": "users",
+        "options": {},
+        "query": "={\n  \"email\":\"{{ $json.email }}\",\n  \"checkCode\":\"{{ $json.checkCode }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.3,
+      "position": [
+        496,
+        320
+      ],
+      "id": "3901bdbd-f4c6-4a46-866c-59e5b14b82b3",
+      "name": "Search User",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "notesInFlow": true,
+      "credentials": {
+        "mongoDb": {
+          "id": "e8XuLRE7mLMOY9if",
+          "name": "BOLTDB Account - MongoDB"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Busca o e-mail e o código de verificação na base."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Search User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "253d8d13-05d9-42d0-86f0-7f20270269f4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "TjHGynHehrhWFBPf",
+  "tags": [
+    {
+      "updatedAt": "2026-07-30T13:33:06.746Z",
+      "createdAt": "2026-07-30T13:33:06.746Z",
+      "id": "e95FvkCAWsptpGGz",
+      "name": "BOLT_LOGIN"
+    }
+  ]
+}
