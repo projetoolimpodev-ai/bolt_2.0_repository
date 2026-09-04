@@ -1,0 +1,496 @@
+{
+  "name": "BOLT - WF00004 - WF-PERFORM-INTELLIGENT-ANALYSIS",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "45bdcda6-aaa2-4c19-9e88-0092ced7c6ae",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.reference }}",
+                    "rightValue": "cef",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ce4c165c-d21a-4fd6-a91a-1539f5ba7211"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CAIXA ECONOMICA FEDERAL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "48a910ad-89b5-4077-8861-abe233732d69",
+                    "leftValue": "={{ $json.reference }}",
+                    "rightValue": "nubank",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NUBANK"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "3f4beeb1-bf30-4ec1-9d22-87c10fe1df86",
+                    "leftValue": "={{ $json.reference }}",
+                    "rightValue": "mercadoPago",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "MERCADO PAGO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f5ba26d1-57c5-4c5f-ac76-335d78003ddd",
+                    "leftValue": "={{ $json.reference }}",
+                    "rightValue": "itau",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ITAU"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "67763d9b-bbf5-4f4a-a6a9-6dc153a303c9",
+                    "leftValue": "={{ $json.reference }}",
+                    "rightValue": "bradesco",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "BRADESCO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "60778977-2eae-46cf-9988-fa107698f3f2",
+                    "leftValue": "={{ $json.reference }}",
+                    "rightValue": "bancoDoBrasil",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "BANCO DO BRASIL"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        -80
+      ],
+      "id": "19476f7a-68e5-43be-9633-84ee7ce0d94b",
+      "name": "Switch",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "yiRQ4hPM9cADpRk6",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/yiRQ4hPM9cADpRk6",
+          "cachedResultName": "BOLT - MS00033 - R-CEF-BASELINE-DATA"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        -576
+      ],
+      "id": "2b991ffd-f9af-4f20-af88-16eb62bc33d7",
+      "name": "R-CEF-BASELINE-DATA"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const data = $input.item.json.text;\nconst ocr = $input.item.json;\n\nlet reference = \"\";\nlet type = \"\";\n\nif (data) {\n\n  // ==================================================\n  // PREPARAR TEXTO\n  // ==================================================\n\n  const lines = data.split(/\\r?\\n/).map(linha => linha.trim()).filter(linha => linha !== \"\");\n  type = \"text\";\n\n  // ==================================================\n  // VERIFICAR SE É DA CAIXA ECONOMICA FEDERAL\n  // ==================================================\n  if (data.includes(\"SAC CAIXA\") || data.includes(\"Alô CAIXA\")) {\n    reference = 'cef';\n  }\n\n  // ==================================================\n  // VERIFICAR SE É DO NUBANK\n  // ==================================================\n  if (data.includes(\"nubank.com.br/contatos#ouvidoria\")) {\n    reference = 'nubank';\n  }\n\n  // ==================================================\n  // VERIFICAR SE É DO MERCADO PAGO\n  // ==================================================\n  if (data.includes(\"Mercado Pago Instituição de Pagamento Ltda.\")) {\n    reference = 'mercadoPago';\n  }\n\n  // ==================================================\n  // VERIFICAR SE É DO ITAÚ\n  // ==================================================\n  if (data.includes(\"extrato mensal\") || data.includes(\"Agência: Conta: Nome:\") || data.includes(\"Logotipo Itaú\")) {\n    reference = 'itau';\n  }\n\n  // ==================================================\n  // VERIFICAR SE É DO BRADESCO\n  // ==================================================\n  if (data.includes(\"Bradesco Celular\") || data.includes(\"Bradesco Internet Banking\")) {\n    reference = 'bradesco';\n  }\n\n  // ==================================================\n  // VERIFICAR SE É DO BANCO DO BRASIL\n  // ==================================================\n  if (data.includes(\"Extrato de Conta Corrente\")) {\n    reference = 'bancoDoBrasil';\n  }\n\n  return {reference, type: type, lines};\n  \n} else {\n\n  type = \"ocr\";\n\n  // ==================================================\n  // VERIFICAR SE É DA CAIXA ECONOMICA FEDERAL\n  // ==================================================\n  if (ocr.pages[0].markdown.includes(\"CAIXA\")) {\n    reference = 'cef';\n  }\n  \n  return { reference, type, pages: ocr.pages };\n  \n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "d2d768c3-2d8d-4581-a8f1-91b57e6ba3df",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "N9x8FhruINwUEZmx",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/N9x8FhruINwUEZmx",
+          "cachedResultName": "BOLT - MS00034 - R-NUBANK-BASELINE-DATA"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        -384
+      ],
+      "id": "c818bb27-d487-41a8-9642-6f83dd7e218a",
+      "name": "R-NUBANK-BASELINE-DATA"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pxGZtSWLY8qOJikV",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/pxGZtSWLY8qOJikV",
+          "cachedResultName": "BOLT - MS00035 - R-MP-BASELINE-DATA"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        -192
+      ],
+      "id": "062cb943-6f94-4819-b0d1-7fe74d7c4752",
+      "name": "R-MP-BASELINE-DATA"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "4eAsxu0XoJLE6D9a",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/4eAsxu0XoJLE6D9a",
+          "cachedResultName": "BOLT - MS00036 - R-ITAU-BASELINE-DATA"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        0
+      ],
+      "id": "ca036f6d-c0db-4022-9825-1266f5d3a784",
+      "name": "R-ITAU-BASELINE-DATA"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "RysaM692yrb0SPy0",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/RysaM692yrb0SPy0",
+          "cachedResultName": "BOLT - MS00037 - R-BRADESCO-BASELINE-DATA"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        192
+      ],
+      "id": "d766388d-9579-4277-84e9-a6eb006748d5",
+      "name": "R-BRADESCO-BASELINE-DATA"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mHn6xh2CU1dXAU5O",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/mHn6xh2CU1dXAU5O",
+          "cachedResultName": "BOLT - MS00038 - R-BB-BASELINE-DATA"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        384
+      ],
+      "id": "642e4f0e-a921-4bb5-a2d2-f971494ed44c",
+      "name": "R-BB-BASELINE-DATA"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a96377b0-cb5d-4b65-9bbc-763c9dd028a4",
+              "name": "code",
+              "value": 303,
+              "type": "number"
+            },
+            {
+              "id": "2055f392-a51d-49d0-8236-e957c14b2825",
+              "name": "description",
+              "value": "O Banco solicitado ainda não está em nossa lista de bancos atendidos. Estamos encaminhando a solicitação para o time de desenvolvimento.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        576
+      ],
+      "id": "633af85d-56ea-4b18-826e-71425ce74a43",
+      "name": "Not Found"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "R-CEF-BASELINE-DATA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "R-NUBANK-BASELINE-DATA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "R-MP-BASELINE-DATA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "R-ITAU-BASELINE-DATA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "R-BRADESCO-BASELINE-DATA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "R-BB-BASELINE-DATA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "R-CEF-BASELINE-DATA": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "beb78d8a-3fdb-4993-91ef-a80237c466df",
+  "meta": {
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "Ah3dXk6DNDtIL4E9",
+  "tags": [
+    {
+      "updatedAt": "2026-08-18T13:34:56.305Z",
+      "createdAt": "2026-08-18T02:45:49.354Z",
+      "id": "0Lqd0eKMzm6iu2xx",
+      "name": "BOLT_SMART_TEXT"
+    }
+  ]
+}

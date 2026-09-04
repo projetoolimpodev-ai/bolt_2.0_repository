@@ -1,0 +1,398 @@
+{
+  "name": "BOLT - WF00002 - WF-CREATE-CHARGE-STRIPE",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -496,
+        160
+      ],
+      "id": "4fa3e6ad-5dc5-453c-9996-9e0f305c8b68",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "fromEmail": "EQUIPE BOLT SECURiTY <projeto.olimpo.dev@gmail.com>",
+        "toEmail": "={{ $('When Executed by Another Workflow').item.json.email }}",
+        "subject": "[BOLT] LINK DE PAGAMENTO - CONTRATAÇÃO DE PLANO",
+        "html": "=<!DOCTYPE html>\n\n<html lang=\"pt-BR\">\n\n<head>\n    <meta charset=\"UTF-8\">\n    <title>LINK DE PAGAMENTO</title>\n</head>\n\n<body style=\"margin:0;padding:0;background-color:#f4f6f9;font-family:Arial,Helvetica,sans-serif;\">\n\n    <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"background-color:#f4f6f9;padding:30px 0;\">\n        <tr>\n            <td align=\"center\">\n\n                <table width=\"650\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"\n                    style=\"background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;\">\n\n                    <!-- Cabeçalho -->\n                    <tr>\n                        <td align=\"center\" style=\"background-color:#0f172a;padding:30px;\">\n                            <img src=\"https://raw.githubusercontent.com/projetoolimpodev-ai/images/main/logo.png\"\n                                alt=\"BOLT\" width=\"220\" style=\"display:block;border:0;max-width:220px;\">\n                        </td>\n                    </tr>\n\n                    <!-- Título -->\n                    <tr>\n                        <td style=\"padding:30px 40px 10px 40px;\">\n                            <h2 style=\"margin:0;color:#111827;\">\n                                CONTRATAÇÃO DE PACOTE BOLT\n                            </h2>\n                        </td>\n                    </tr>\n\n                    <!-- Conteúdo -->\n                    <tr>\n                        <td style=\"padding:10px 40px 40px 40px;color:#374151;font-size:14px;line-height:1.7;\">\n\n                            <p>\n                                Olá,\n                                <strong>{{ $('When Executed by Another Workflow').item.json.name }}</strong>,\n                            </p>\n\n                            <p>\n                                Você solicitou a contratação do Pacote abaixo:\n                            </p>\n\n                            <table width=\"100%\" cellpadding=\"10\" cellspacing=\"0\" border=\"0\"\n                                style=\"border-collapse:collapse;border:1px solid #d1d5db;margin-top:20px;margin-bottom:20px;\">\n\n                                <tr>\n                                    <td width=\"160\" style=\"background:#f9fafb;border-bottom:1px solid #d1d5db;\">\n                                        <strong>Nome</strong>\n                                    </td>\n                                    <td style=\"border-bottom:1px solid #d1d5db;\">\n                                        {{ $('When Executed by Another Workflow').item.json.charge.packageId }}\n                                    </td>\n                                </tr>\n\n                                <tr>\n                                    <td style=\"background:#f9fafb;border-bottom:1px solid #d1d5db;\">\n                                        <strong>Descrição</strong>\n                                    </td>\n                                    <td style=\"border-bottom:1px solid #d1d5db;\">\n                                        {{ $('When Executed by Another Workflow').item.json.charge.description }}\n                                    </td>\n                                </tr>\n\n                                <tr>\n                                    <td style=\"background:#f9fafb;\">\n                                        <strong>Preço</strong>\n                                    </td>\n                                    <td>\n                                        <ul style=\"margin:0;padding-left:20px;\">\n                                            R$ {{ $('When Executed by Another Workflow').item.json.charge.amount }},00\n                                        </ul>\n                                    </td>\n                                </tr>\n\n                                <tr>\n                                    <td style=\"background:#f9fafb;\">\n                                        <strong>Link de Pagamento</strong>\n                                    </td>\n                                    <td>\n                                        <ul style=\"margin:0;padding-left:20px;\">\n                                            {{ $json.charge.paymentURL }}\n                                        </ul>\n                                    </td>\n                                </tr>\n\n                            </table>\n\n                            <p>\n                                Esse link é válido por 7 dias. Seu acesso é liberado assim que recebermos a  confirmação de Pagamento.\n                            </p>\n\n                            <br>\n\n                            <p style=\"margin-bottom:0;\">\n                                At.te.,\n                            </p>\n\n                            <p style=\"margin-top:5px;\">\n                                <strong>Equipe BOLT de Segurança</strong>\n                            </p>\n\n                        </td>\n                    </tr>\n\n                    <!-- Rodapé -->\n                    <tr>\n                        <td align=\"center\"\n                            style=\"background:#f9fafb;padding:20px;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;\">\n\n                            Esta é uma mensagem automática enviada pelo Sistema BOLT.<br>\n                            Não responda este e-mail.\n\n                        </td>\n                    </tr>\n\n                </table>\n\n            </td>\n        </tr>\n\n    </table>\n\n</body>\n\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        848,
+        160
+      ],
+      "id": "0df1d2a4-191b-415a-8c66-4648dcff5f3a",
+      "name": "Send an Email",
+      "webhookId": "8e9f62ad-07af-4a33-bf7b-6141daff301e",
+      "credentials": {
+        "smtp": {
+          "id": "QxcGYuqWTeCOl21v",
+          "name": "BREVO - SMTP - Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "692050bd-0e51-482d-b5c5-3edca4744fb5",
+              "name": "mode",
+              "value": "payment",
+              "type": "string"
+            },
+            {
+              "id": "09e8c89b-2b2b-4400-bcc9-2da459ce3920",
+              "name": "success_url",
+              "value": "http://127.0.0.1:5500/index.html?session_id={CHECKOUT_SESSION_ID}",
+              "type": "string"
+            },
+            {
+              "id": "0e4ad5ab-9a59-468d-9ed0-d611269f5bf1",
+              "name": "cancel_url",
+              "value": "http://127.0.0.1:5501/index.html?session_id={CHECKOUT_SESSION_ID}",
+              "type": "string"
+            },
+            {
+              "id": "3c9c580b-1640-462c-b951-c1ff7b07aebd",
+              "name": "customer",
+              "value": "={{ $json.customerId || $json.metadata.customerId }}",
+              "type": "string"
+            },
+            {
+              "id": "c9cbba14-a61b-479b-aa03-678f46a7fd55",
+              "name": "currency",
+              "value": "brl",
+              "type": "string"
+            },
+            {
+              "id": "83805699-7b25-4851-8237-aed723e5f867",
+              "name": "name",
+              "value": "={{ $('When Executed by Another Workflow').item.json.charge.packageId }}",
+              "type": "string"
+            },
+            {
+              "id": "1700877a-1927-4c2f-a21b-5a5d59804679",
+              "name": "description",
+              "value": "={{ $('When Executed by Another Workflow').item.json.charge.description }}",
+              "type": "string"
+            },
+            {
+              "id": "f0777325-d897-4101-949a-bb8d36cddf40",
+              "name": "amount",
+              "value": "={{ $('When Executed by Another Workflow').item.json.charge.amount }}",
+              "type": "number"
+            },
+            {
+              "id": "b2298017-6850-4b4e-b36e-3c873d08a1c5",
+              "name": "quantity",
+              "value": 1,
+              "type": "number"
+            },
+            {
+              "id": "b698d71f-e09b-43b0-9816-48a49c6e6876",
+              "name": "tenantId",
+              "value": "={{ $('When Executed by Another Workflow').item.json.metadata.tenantId }}",
+              "type": "object"
+            },
+            {
+              "id": "d2594ef5-8a8b-4d68-b715-c4030fbbee60",
+              "name": "tenantDocument",
+              "value": "={{ $('When Executed by Another Workflow').item.json.metadata.document }}",
+              "type": "string"
+            },
+            {
+              "id": "6d766f2e-d5f6-477f-b284-a9c9f471294c",
+              "name": "productType",
+              "value": "={{ $json.charge.contractType }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        400,
+        160
+      ],
+      "id": "11e259f5-50dd-4602-8858-64158be076fe",
+      "name": "Set Charge Field"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "42f06d63-2c6f-41d8-b0d1-9dc9b89a5df3",
+              "name": "_id",
+              "value": "={{ $json._id }}",
+              "type": "object"
+            },
+            {
+              "id": "3d8d54cb-c146-4ce9-a2e7-f9b571f2357f",
+              "name": "name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "173d8403-6268-405e-a9c3-11735a2734d7",
+              "name": "email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "05d6f8e6-c7f1-4a89-9574-1a95c0ed35b6",
+              "name": "phone",
+              "value": "={{ $json.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "119f3c4f-847f-4572-9512-dc370312e3af",
+              "name": "description",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "31376a3a-0585-470f-a5ef-6d7016e8ec8c",
+              "name": "address",
+              "value": "={{ $json.address }}",
+              "type": "object"
+            },
+            {
+              "id": "799c2fb6-d307-4cf5-8144-4a142b8f26aa",
+              "name": "metadata.tenantId",
+              "value": "={{ $json.metadata.tenantId }}",
+              "type": "object"
+            },
+            {
+              "id": "4a3e3c6f-5cf4-45cd-86a4-62c3940fca92",
+              "name": "metadata.document",
+              "value": "={{ $json.metadata.document }}",
+              "type": "string"
+            },
+            {
+              "id": "df28b6ec-2022-4a33-8767-95242b391f80",
+              "name": "metadata.source",
+              "value": "2.0",
+              "type": "string"
+            },
+            {
+              "id": "cc8a02b0-d263-4903-acd2-81372f7d9c15",
+              "name": "charge.contractType",
+              "value": "={{ $json.charge.contractType }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -48,
+        80
+      ],
+      "id": "0c4b7ea8-0e72-4c24-b047-e5ee85822822",
+      "name": "Set Customer Field"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f988546b-2fc7-4101-a19c-56c760f2816f",
+              "leftValue": "={{ $json.metadata.customerId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -272,
+        160
+      ],
+      "id": "8029b115-3ca4-4578-b50d-99b9e7068909",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "x4kzzmLWx3LA892v",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/x4kzzmLWx3LA892v",
+          "cachedResultName": "BOLT - MS00023 - C-CREATE-CUSTOMER-STRIPE"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        80
+      ],
+      "id": "6f6523f0-9438-452c-9540-bc8b5956d7a1",
+      "name": "C-CREATE-CUSTOMER-STRIPE"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "VCYsAEWQrpBSwLdS",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/VCYsAEWQrpBSwLdS",
+          "cachedResultName": "BOLT - MS00024 - C-CREATE-NEW-CHARGE-STRIPE"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        624,
+        160
+      ],
+      "id": "16f477c2-c8ce-410a-a926-b1091ecbf4b5",
+      "name": "C-CREATE-NEW-CHARGE-STRIPE"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Charge Field": {
+      "main": [
+        [
+          {
+            "node": "C-CREATE-NEW-CHARGE-STRIPE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Customer Field": {
+      "main": [
+        [
+          {
+            "node": "C-CREATE-CUSTOMER-STRIPE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Set Customer Field",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Charge Field",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "C-CREATE-CUSTOMER-STRIPE": {
+      "main": [
+        [
+          {
+            "node": "Set Charge Field",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "C-CREATE-NEW-CHARGE-STRIPE": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "537a8354-36ea-431b-9ca8-b6c0a0fa692e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "GVGcFXLHfmrchaQq",
+  "tags": [
+    {
+      "updatedAt": "2026-08-17T19:54:38.127Z",
+      "createdAt": "2026-08-17T19:54:38.127Z",
+      "id": "D61K5Uh4H0apg9JL",
+      "name": "BOLT_CHARGE"
+    }
+  ]
+}

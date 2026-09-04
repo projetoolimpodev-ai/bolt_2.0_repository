@@ -1,0 +1,699 @@
+{
+  "name": "BOLT - WF00003 - WF-SMART-ANALYSIS-TEXT",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "smartAnalysis/wfSmartAnalysisText",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -352
+      ],
+      "id": "00f49ed3-22be-4e4a-b785-5c429d6cb592",
+      "name": "Webhook",
+      "webhookId": "219a3400-4527-40b0-b991-dd69a763c208",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "TI3SIyLaAJsFB2mJ",
+          "name": "BOLT INTERNAL CREDENTIAL"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 301,
+          "responseKey": "error"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        -256
+      ],
+      "id": "a39eb224-4f23-4548-ac05-176a569bc288",
+      "name": "Respond to Webhook - API ERROR - 301"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "5kTDHBdD2EFwy7x5",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/5kTDHBdD2EFwy7x5",
+          "cachedResultName": "BOLT - MS00031 - C-EXTRACT-PDF-TEXT-DATA"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        -448
+      ],
+      "id": "0f310550-ecc8-413c-b722-74a55e9041b0",
+      "name": "C-EXTRACT-PDF-TEXT-DATA"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "564da77f-71cc-46cc-a853-060ce8788aea",
+              "name": "userId",
+              "value": "={{ $('Webhook').item.json.query._id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        -448
+      ],
+      "id": "7e4eb376-9466-45b4-85ce-6e7436a64875",
+      "name": "Set User Data"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Wg1TT1pbxbPFTNKv",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Wg1TT1pbxbPFTNKv",
+          "cachedResultName": "BOLT - MS00032 - R-CHECK-USAGE-CAPACITY"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        -448
+      ],
+      "id": "ff70c3fe-0224-4550-bef3-17fca9ab794a",
+      "name": "R-CHECK-USAGE-CAPACITY"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fe669858-b7fd-4942-8dac-1424149b6a50",
+              "leftValue": "={{ $json.code }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        -448
+      ],
+      "id": "07c67cbd-29e5-4489-ac85-fdb6ce8d719c",
+      "name": "Check Capacity"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        -352
+      ],
+      "id": "777a80e1-1a51-44df-a42c-9cb31660c0a9",
+      "name": "Respond to Webhook - 302"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1568,
+        -544
+      ],
+      "id": "5b85139d-97b2-4818-81d7-fc1b8894492e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7a89cdfd-e0d3-4053-b9f9-3f734a2bb5a5",
+              "name": "text",
+              "value": "={{ $('C-EXTRACT-PDF-TEXT-DATA').item.json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        -544
+      ],
+      "id": "ebaf5424-aa9f-4140-8763-8bd39ae9fcf6",
+      "name": "Set Text Data"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Ah3dXk6DNDtIL4E9",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Ah3dXk6DNDtIL4E9",
+          "cachedResultName": "BOLT - WF00004 - WF-PERFORM-INTELLIGENT-ANALYSIS"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1344,
+        -544
+      ],
+      "id": "e7405053-4b4e-419d-9347-b25d1ba0770c",
+      "name": "WF-PERFORM-INTELLIGENT-ANALYSIS"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"date\":{{ $now }},\n  \"user\":\"{{ $('Webhook').item.json.query._id }}\",\n  \"tenant\":{{ $('R-CHECK-USAGE-CAPACITY').item.json.tenantId }},\n  \"status\":\"success\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1792,
+        -448
+      ],
+      "id": "d60b4374-339d-4c36-b8ee-e698d0860eff",
+      "name": "Set Consumption Register"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "L8Jo0UKIXoQUfH3c",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/L8Jo0UKIXoQUfH3c",
+          "cachedResultName": "BOLT - MS00039 - C-REGISTER-CONSUMPTION"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2016,
+        -448
+      ],
+      "id": "46fd384f-e727-4b66-a8cf-e555016d087c",
+      "name": "C-REGISTER-CONSUMPTION"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "80019785-228f-4901-8e8b-ccdd85050b79",
+              "leftValue": "={{ $json.package.searchsUsed }}",
+              "rightValue": "={{ $json.package.maxContractedSearches }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2240,
+        -448
+      ],
+      "id": "2951c713-6bc2-4d66-a69b-325e9ff12a6f",
+      "name": "Check Consumption"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2464,
+        -544
+      ],
+      "id": "eb3d82b8-8c62-40b8-a83a-73a07e667161",
+      "name": "No Operation"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bb1a233e-2e2b-4c74-9048-606898660a72",
+              "name": "body._id",
+              "value": "={{ $('Set Consumption Register').item.json.tenant }}",
+              "type": "object"
+            },
+            {
+              "id": "579ba6ce-485d-4209-980e-3aa04aa346b3",
+              "name": "body.action",
+              "value": "=renew",
+              "type": "string"
+            },
+            {
+              "id": "56387570-58bc-45ea-a5f6-05a7e4240ede",
+              "name": "body.charge.paymentURL",
+              "value": "=",
+              "type": "string"
+            },
+            {
+              "id": "0bf161d8-6340-4f6c-ab65-b26ceaad5a19",
+              "name": "body.charge.checkoutSessionId",
+              "value": "=",
+              "type": "string"
+            },
+            {
+              "id": "a5d35624-fae7-4770-a492-c8e3707c63a7",
+              "name": "body.charge.status",
+              "value": "=",
+              "type": "string"
+            },
+            {
+              "id": "b8f23910-f6ba-4bb6-b9e6-2283fcb0f6e8",
+              "name": "body.charge.paidAt",
+              "value": "=",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2464,
+        -352
+      ],
+      "id": "914a2979-8e54-4d33-acee-c3b1ecbc3ace",
+      "name": "Set Tenant Renew"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ujBfObqe4CfFeHrU",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/ujBfObqe4CfFeHrU",
+          "cachedResultName": "BOLT - MS00023 - U-TENANT"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2688,
+        -352
+      ],
+      "id": "0ff76061-3cf7-4761-aa4a-faa12f3138fa",
+      "name": "U-TENANT"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6470d6bd-2cbc-432c-a31f-3ddd3c533fe8",
+              "name": "service",
+              "value": "WF00003",
+              "type": "string"
+            },
+            {
+              "id": "ab1a0287-b31a-4fbc-a2ce-2ab7c39c1223",
+              "name": "requester",
+              "value": "={{ $('Webhook').item.json.query._id }}",
+              "type": "string"
+            },
+            {
+              "id": "61d6c685-29ef-40aa-a627-25a102f6dfe3",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "c608f8c1-dee3-4fed-b550-214a5c947529",
+              "name": "code",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "6054cf24-c707-4de1-a739-490d9610536c",
+              "name": "description",
+              "value": "={{ $('WF-PERFORM-INTELLIGENT-ANALYSIS').item.json.bank}}",
+              "type": "string"
+            },
+            {
+              "id": "f4e5ac94-7c9f-4903-8d4c-6c00d5841bba",
+              "name": "messages",
+              "value": "[]",
+              "type": "array"
+            },
+            {
+              "id": "be9d3abc-f341-4117-a732-dc80aa5b1aa4",
+              "name": "date",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "bce4a2d8-56d8-469a-a783-38765d50c198",
+              "name": "request",
+              "value": "={{ $('Webhook').item.json }}",
+              "type": "object"
+            },
+            {
+              "id": "c7284c63-54b7-45f1-9c7a-261093d26415",
+              "name": "response",
+              "value": "={{ $('Respond to Webhook').item.json }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1792,
+        -640
+      ],
+      "id": "39057517-f0f6-4fb4-9ab1-008d3fc0ca78",
+      "name": "Set Audit - Bank"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "zMipPWhaIr3IIH0c",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/zMipPWhaIr3IIH0c",
+          "cachedResultName": "BOLT - MS00042 - C-AUDIT"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2016,
+        -640
+      ],
+      "id": "43311878-4120-468b-9504-0d0cfdfe0d0d",
+      "name": "C-AUDIT"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "C-EXTRACT-PDF-TEXT-DATA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - API ERROR - 301",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "C-EXTRACT-PDF-TEXT-DATA": {
+      "main": [
+        [
+          {
+            "node": "Set User Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set User Data": {
+      "main": [
+        [
+          {
+            "node": "R-CHECK-USAGE-CAPACITY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "R-CHECK-USAGE-CAPACITY": {
+      "main": [
+        [
+          {
+            "node": "Check Capacity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Capacity": {
+      "main": [
+        [
+          {
+            "node": "Set Text Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook - 302",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Text Data": {
+      "main": [
+        [
+          {
+            "node": "WF-PERFORM-INTELLIGENT-ANALYSIS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WF-PERFORM-INTELLIGENT-ANALYSIS": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Consumption Register",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Audit - Bank",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Consumption Register": {
+      "main": [
+        [
+          {
+            "node": "C-REGISTER-CONSUMPTION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "C-REGISTER-CONSUMPTION": {
+      "main": [
+        [
+          {
+            "node": "Check Consumption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Consumption": {
+      "main": [
+        [
+          {
+            "node": "No Operation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Tenant Renew",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Tenant Renew": {
+      "main": [
+        [
+          {
+            "node": "U-TENANT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Audit - Bank": {
+      "main": [
+        [
+          {
+            "node": "C-AUDIT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "13e6cd96-9012-435e-94ea-891266a3c7a7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2f3580ae359ea1129308a942430fea6797c2d83d301875d6688bc1cd1cc1d2"
+  },
+  "nodeGroups": [],
+  "id": "trcJCrtQY5UhyBq3",
+  "tags": [
+    {
+      "updatedAt": "2026-08-18T13:34:56.305Z",
+      "createdAt": "2026-08-18T02:45:49.354Z",
+      "id": "0Lqd0eKMzm6iu2xx",
+      "name": "BOLT_SMART_TEXT"
+    }
+  ]
+}
